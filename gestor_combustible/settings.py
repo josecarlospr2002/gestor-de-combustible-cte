@@ -102,3 +102,7 @@ JAZZMIN_SETTINGS = {
         {"name": "Inicio", "url": "admin:index", "permissions": ["auth.view_user"]},
     ],
 }
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard'
+LOGOUT_REDIRECT_URL = 'login'

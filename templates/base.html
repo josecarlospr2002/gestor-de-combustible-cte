@@ -3,17 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Combustible - CTE Ernesto Guevara</title>
+    <title>GestComb - Gestor de Combustible</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 <body>
     <nav class="navbar navbar-dark bg-dark">
         <div class="container-fluid">
-            <span class="navbar-brand mb-0 h1">Gestor de Combustible</span>
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-fuel-pump"></i> GestComb - Sistema de Gestión del Combustible de la CTE Ernesto Guevara de la Serna
+            </span>
+
             {% if user.is_authenticated %}
                 <div>
-                    <span class="text-white me-3">{{ user.get_full_name }} - {{ user.get_departamento_display }}</span>
-<a href="{% url 'admin:logout' %}" class="btn btn-danger btn-sm">Cerrar Sesión</a>                </div>
+                    <span class="text-white me-3">
+                        <i class="bi bi-person-circle"></i> {{ user.get_full_name }} - {{ user.get_departamento_display }}
+                    </span>
+                    <a href="{% url 'admin:logout' %}" class="btn btn-danger btn-sm">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </a>
+                </div>
+            {% else %}
+                <div>
+                    <span class="text-white me-2">
+                        <i class="bi bi-box-arrow-in-right"></i> Inicio de Sesión
+                    </span>
+                </div>
             {% endif %}
         </div>
     </nav>
