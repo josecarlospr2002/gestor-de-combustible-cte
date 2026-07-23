@@ -1,6 +1,34 @@
 from django.db import models
 from django.conf import settings
 
+class Transporte(models.Model):
+    tipo_combustible = models.CharField(
+        max_length=50,
+        verbose_name='Tipo de Combustible'
+    )
+    empresa = models.CharField(
+        max_length=50,
+        verbose_name='Empresa'
+    )
+    tipo_vehiculo = models.CharField(
+        max_length=50,
+        verbose_name='Tipo de Vehículo'
+    )
+    chapa = models.CharField(
+        max_length=50,
+        verbose_name='Chapa'
+    )
+    actividad = models.TextField(
+        verbose_name='Actividad'
+    )
+
+    class Meta:
+        verbose_name = 'Transporte'
+        verbose_name_plural = 'Transportes'
+        ordering = ['empresa']
+
+    def __str__(self):
+        return f"{self.tipo_vehiculo} - {self.chapa}"
 
 class SolicitudCombustible(models.Model):
     ESTADOS = [
