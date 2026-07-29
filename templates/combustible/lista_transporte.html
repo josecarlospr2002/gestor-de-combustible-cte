@@ -28,7 +28,12 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
     background-color: #f0f0ff;
 }
 .titulo-tabla {
-    color: white;
+    color: black;
+}
+.contador {
+    color: black;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
 }
 </style>
 
@@ -36,9 +41,14 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
     <h2 class="mb-0 titulo-tabla">
         <i class="bi bi-truck"></i> Vehículos Registrados
     </h2>
-    <a href="{% url 'dashboard' %}" class="btn btn-danger fw-bold">
-        <i class="bi bi-arrow-left"></i> Volver a la Interfaz Principal
-    </a>
+    <div>
+        <a href="{% url 'crear_vehiculo' %}" class="btn btn-success fw-bold me-2">
+            <i class="bi bi-plus-circle"></i> Añadir Vehículo
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-danger fw-bold">
+            <i class="bi bi-arrow-left"></i> Volver al Inicio
+        </a>
+    </div>
 </div>
 
 <div class="table-container">
@@ -51,6 +61,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                     <th>Tipo de Combustible</th>
                     <th>Empresa</th>
                     <th>Actividad</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -61,10 +72,18 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                     <td>{{ vehiculo.tipo_combustible }}</td>
                     <td>{{ vehiculo.empresa }}</td>
                     <td>{{ vehiculo.actividad }}</td>
+                    <td>
+                        <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-primary btn-sm" title="Modificar Registro">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="#" class="btn btn-danger btn-sm" title="Eliminar Registro" onclick="confirmarEliminar('{% url 'eliminar_vehiculo' vehiculo.id %}'); return false;">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-5">
+                    <td colspan="6" class="text-center text-muted py-5">
                         <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                         <p class="mt-3 fs-5">No hay vehículos registrados.</p>
                     </td>
@@ -73,5 +92,9 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="mt-3 text-end contador">
+    <strong>Total de vehículos registrados: {{ vehiculos|length }}</strong>
 </div>
 {% endblock %}
