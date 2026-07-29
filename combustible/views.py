@@ -4,17 +4,29 @@ from django.contrib import messages
 from .models import Transporte
 from .forms import TransporteForm
 
-
 @login_required
 def dashboard(request):
     return render(request, 'combustible/dashboard.html')
 
-
 @login_required
 def lista_transporte(request):
     vehiculos = Transporte.objects.all()
-    return render(request, 'combustible/lista_transporte.html', {'vehiculos': vehiculos})
 
+    chapa = request.GET.get('chapa', '')
+    tipo_vehiculo = request.GET.get('tipo_vehiculo', '')
+    tipo_combustible = request.GET.get('tipo_combustible', '')
+    empresa = request.GET.get('empresa', '')
+
+    if chapa:
+        vehiculos = vehiculos.filter(chapa__icontains=chapa)
+    if tipo_vehiculo:
+        vehiculos = vehiculos.filter(tipo_vehiculo__icontains=tipo_vehiculo)
+    if tipo_combustible:
+        vehiculos = vehiculos.filter(tipo_combustible__icontains=tipo_combustible)
+    if empresa:
+        vehiculos = vehiculos.filter(empresa__icontains=empresa)
+
+    return render(request, 'combustible/lista_transporte.html', {'vehiculos': vehiculos})
 
 @login_required
 def crear_vehiculo(request):
@@ -30,7 +42,6 @@ def crear_vehiculo(request):
         form = TransporteForm()
 
     return render(request, 'combustible/crear_vehiculo.html', {'form': form})
-
 
 @login_required
 def editar_vehiculo(request, pk):
