@@ -29,6 +29,7 @@ class Transporte(models.Model):
 
 class SolicitudCombustible(models.Model):
     ESTADOS = [
+        ('borrador', 'Borrador'),
         ('pendiente', 'Pendiente de Aprobación'),
         ('aprobada', 'Aprobada por Director'),
         ('rechazada', 'Rechazada por Director'),
@@ -50,7 +51,7 @@ class SolicitudCombustible(models.Model):
     estado = models.CharField(
         max_length=30,
         choices=ESTADOS,
-        default='pendiente'
+        default='borrador'
     )
 
     class Meta:

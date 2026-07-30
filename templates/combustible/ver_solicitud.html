@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
+.card-solicitud {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+.tabla-vehiculos {
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+.tabla-vehiculos thead th {
+    background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 0.7rem;
+    font-size: 0.85rem;
+    text-align: center;
+}
+.tabla-vehiculos tbody td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border: none;
+    text-align: center;
+    font-size: 0.85rem;
+}
+.totales {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0" style="color: black;">
+        <i class="bi bi-eye"></i> Ver Solicitud
+    </h2>
+    <a href="{% url 'lista_solicitudes' %}" class="btn btn-danger fw-bold">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="card-solicitud">
+    <div class="card-header text-white" style="background: linear-gradient(135deg, #0d6efd, #6f42c1);">
+        <h5 class="mb-0">
+            {% if solicitud.nombre %}
+                {{ solicitud.nombre }}
+            {% else %}
+                Solicitud sin nombre
+            {% endif %}
+        </h5>
+        <small>{{ solicitud.fecha_hora|date:"d/m/Y H:i" }} | {{ solicitud.get_estado_display }}</small>
+    </div>
+    <div class="card-body bg-light">
+        {% if solicitud.descripcion %}
+        <p><strong>Descripción:</strong> {{ solicitud.descripcion }}</p>
+        {% endif %}
+
+        <div class="tabla-vehiculos mt-3">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tipo de Combustible</th>
+                        <th>Empresa</th>
+                        <th>Tipo de Vehículo</th>
+                        <th>Chapa</th>
+                        <th>Actividad</th>
+                        <th>Vía Blanca</th>
+                        <th>CTE</th>
+                        <th>I/C</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for detalle in detalles %}
+                    <tr>
+                        <td>{{ detalle.transporte.tipo_combustible }}</td>
+                        <td>{{ detalle.transporte.empresa }}</td>
+                        <td>{{ detalle.transporte.tipo_vehiculo }}</td>
+                        <td><strong>{{ detalle.transporte.chapa }}</strong></td>
+                        <td>{{ detalle.actividad|default:"-" }}</td>
+                        <td>{{ detalle.via_blanca }}</td>
+                        <td>{{ detalle.cte }}</td>
+                        <td>{{ detalle.ic }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">Sin detalles</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="totales">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <strong class="text-primary">Subtotal de Consumo:</strong> <span id="subtotal-consumo">0.00</span>
+                </div>
+                <div class="col-md-4">
+                    <strong class="text-success">Subtotal de Ventas:</strong> <span id="subtotal-ventas">0.00</span>
+                </div>
+                <div class="col-md-4">
+                    <strong style="color: #6f42c1;">Total General:</strong> <span id="total-general">0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="pb-4"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var subtotalConsumo = 0;
+    var subtotalVentas = 0;
+
+    var filas = document.querySelectorAll('.tabla-vehiculos tbody tr');
+    filas.forEach(function(fila) {
+        var empresa = fila.cells[1].textContent.trim();
+        var viaBlanca = parseFloat(fila.cells[5].textContent) || 0;
+        var cte = parseFloat(fila.cells[6].textContent) || 0;
+        var suma = viaBlanca + cte;
+
+        if (empresa.toLowerCase() === 'cte') {
+            subtotalConsumo += suma;
+        } else {
+            subtotalVentas += suma;
+        }
+    });
+
+    document.getElementById('subtotal-consumo').textContent = subtotalConsumo.toFixed(2);
+    document.getElementById('subtotal-ventas').textContent = subtotalVentas.toFixed(2);
+    document.getElementById('total-general').textContent = (subtotalConsumo + subtotalVentas).toFixed(2);
+});
+</script>
+{% endblock %}

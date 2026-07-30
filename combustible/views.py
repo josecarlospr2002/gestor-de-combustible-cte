@@ -113,7 +113,7 @@ def crear_solicitud(request):
             nombre=nombre,
             fecha_hora=fecha_hora,
             descripcion=descripcion,
-            estado='pendiente'
+            estado='borrador'
         )
 
         for vehiculo in vehiculos:
@@ -136,3 +136,91 @@ def crear_solicitud(request):
         return redirect('lista_solicitudes')
 
     return render(request, 'combustible/crear_solicitud.html', {'vehiculos': vehiculos})
+
+
+@login_required
+def enviar_solicitud(request, pk):
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk)
+    if solicitud.estado == 'borrador':
+        solicitud.estado = 'pendiente'
+        solicitud.save()
+        messages.success(request, 'Solicitud enviada correctamente.')
+    return redirect('lista_solicitudes')
+
+
+@login_required
+def ver_solicitud(request, pk):
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk)
+    detalles = DetalleSolicitud.objects.filter(solicitud=solicitud)
+    return render(request, 'combustible/ver_solicitud.html', {
+        'solicitud': solicitud,
+        'detalles': detalles
+    })
+
+
+@login_required
+def editar_solicitud(request, pk):
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='borrador')
+    vehiculos = Transporte.objects.all()
+    detalles = DetalleSolicitud.objects.filter(solicitud=solicitud)
+
+    detalles_dict = {}
+    for d in detalles:
+        detalles_dict[d.transporte_id] = d
+
+    for v in vehiculos:
+        detalle = detalles_dict.get(v.id)
+        if detalle:
+            v.detalle_actividad = detalle.actividad if detalle.actividad else ''
+            v.detalle_via_blanca = str(detalle.via_blanca) if detalle.via_blanca else '0'
+            v.detalle_cte = str(detalle.cte) if detalle.cte else '0'
+            v.detalle_ic = str(detalle.ic) if detalle.ic else '0'
+        else:
+            v.detalle_actividad = ''
+            v.detalle_via_blanca = '0'
+            v.detalle_cte = '0'
+            v.detalle_ic = '0'
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '')
+        fecha_hora = request.POST.get('fecha_hora', '')
+        descripcion = request.POST.get('descripcion', '')
+
+        solicitud.nombre = nombre
+        solicitud.fecha_hora = fecha_hora
+        solicitud.descripcion = descripcion
+        solicitud.save()
+
+        detalles.delete()
+
+        for vehiculo in vehiculos:
+            actividad = request.POST.get(f'actividad_{vehiculo.id}', '')
+            via_blanca = request.POST.get(f'via_blanca_{vehiculo.id}', '0')
+            cte = request.POST.get(f'cte_{vehiculo.id}', '0')
+            ic = request.POST.get(f'ic_{vehiculo.id}', '0')
+
+            if actividad or via_blanca != '0' or cte != '0' or ic != '0':
+                DetalleSolicitud.objects.create(
+                    solicitud=solicitud,
+                    transporte=vehiculo,
+                    actividad=actividad,
+                    via_blanca=float(via_blanca) if via_blanca else 0,
+                    cte=float(cte) if cte else 0,
+                    ic=float(ic) if ic else 0
+                )
+
+        messages.success(request, 'Solicitud actualizada correctamente.')
+        return redirect('lista_solicitudes')
+
+    return render(request, 'combustible/editar_solicitud.html', {
+        'solicitud': solicitud,
+        'vehiculos': vehiculos,
+    })
+
+
+@login_required
+def eliminar_solicitud(request, pk):
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='borrador')
+    solicitud.delete()
+    messages.success(request, 'Solicitud eliminada correctamente.')
+    return redirect('lista_solicitudes')

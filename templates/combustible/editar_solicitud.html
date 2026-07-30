@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
+.card-solicitud {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+.tabla-vehiculos {
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+.tabla-vehiculos thead th {
+    background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 0.7rem;
+    font-size: 0.85rem;
+    text-align: center;
+}
+.tabla-vehiculos tbody td {
+    padding: 0.5rem;
+    vertical-align: middle;
+    border: none;
+    text-align: center;
+    font-size: 0.85rem;
+}
+.tabla-vehiculos tbody tr {
+    background-color: white;
+}
+.tabla-vehiculos tbody tr:hover {
+    background-color: #f0f0ff;
+}
+.tabla-vehiculos .form-control-sm {
+    font-size: 0.8rem;
+    padding: 0.3rem;
+}
+.btn-quitar {
+    background: none;
+    border: none;
+    color: #dc3545;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0;
+}
+.btn-quitar:hover {
+    color: #a71d2a;
+}
+.totales {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+.totales .total-item {
+    font-size: 1rem;
+    font-weight: 600;
+}
+</style>
+
+<div class="row justify-content-center mt-3">
+    <div class="col-md-12">
+        <div class="card-solicitud">
+            <div class="card-header text-white text-center" style="background: linear-gradient(135deg, #0d6efd, #6f42c1);">
+                <h4 class="mb-0 py-2 fw-bold">
+                    <i class="bi bi-pencil-square"></i> Modificar Solicitud de Combustible
+                </h4>
+            </div>
+            <div class="card-body p-4 bg-light">
+                <form method="post" id="form-solicitud">
+                    {% csrf_token %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary">Nombre de la Solicitud</label>
+                            <input type="text" name="nombre" class="form-control" value="{{ solicitud.nombre }}" placeholder="Opcional: nombre de la solicitud">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary">Fecha y Hora *</label>
+                            <input type="datetime-local" name="fecha_hora" id="fecha_hora" class="form-control" value="{{ solicitud.fecha_hora|date:'Y-m-d\TH:i' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary">Descripción</label>
+                            <input type="text" name="descripcion" class="form-control" value="{{ solicitud.descripcion|default:'' }}" placeholder="Opcional: descripción">
+                        </div>
+                    </div>
+
+                    <div class="tabla-vehiculos">
+                        <table class="table table-hover mb-0" id="tabla-vehiculos">
+                            <thead>
+                                <tr>
+                                    <th>Tipo de Combustible</th>
+                                    <th>Empresa</th>
+                                    <th>Tipo de Vehículo</th>
+                                    <th>Chapa</th>
+                                    <th>Actividad</th>
+                                    <th>Vía Blanca</th>
+                                    <th>CTE</th>
+                                    <th>I/C</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for vehiculo in vehiculos %}
+                                <tr id="fila-{{ vehiculo.id }}" data-empresa="{{ vehiculo.empresa }}">
+                                    <td>{{ vehiculo.tipo_combustible }}</td>
+                                    <td>{{ vehiculo.empresa }}</td>
+                                    <td>{{ vehiculo.tipo_vehiculo }}</td>
+                                    <td><strong>{{ vehiculo.chapa }}</strong></td>
+                                    <td>
+                                        <input type="text" name="actividad_{{ vehiculo.id }}" class="form-control form-control-sm" placeholder="Actividad" value="{{ vehiculo.detalle_actividad|default:'' }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="via_blanca_{{ vehiculo.id }}" class="form-control form-control-sm via-blanca" placeholder="0" step="0.01" min="0" value="{{ vehiculo.detalle_via_blanca|default:'0' }}" oninput="calcularTotales()">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="cte_{{ vehiculo.id }}" class="form-control form-control-sm cte" placeholder="0" step="0.01" min="0" value="{{ vehiculo.detalle_cte|default:'0' }}" oninput="calcularTotales()">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="ic_{{ vehiculo.id }}" class="form-control form-control-sm" placeholder="0" step="0.01" min="0" value="{{ vehiculo.detalle_ic|default:'0' }}">
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn-quitar" onclick="quitarFila({{ vehiculo.id }})" title="Quitar vehículo">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">
+                                        No hay vehículos registrados.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="totales">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <span class="total-item text-primary">Subtotal de Consumo: </span>
+                                <strong id="subtotal-consumo">0.00</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="total-item text-success">Subtotal de Ventas: </span>
+                                <strong id="subtotal-ventas">0.00</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="total-item" style="color: #6f42c1;">Total General: </span>
+                                <strong id="total-general">0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'lista_solicitudes' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                        <button type="submit" class="btn text-white fw-bold" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
+                            <i class="bi bi-save"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="pb-4"></div>
+
+<script>
+var filasEliminadas = {};
+
+function quitarFila(id) {
+    var fila = document.getElementById('fila-' + id);
+    if (fila) {
+        filasEliminadas[id] = fila;
+        fila.remove();
+        calcularTotales();
+    }
+}
+
+function calcularTotales() {
+    var subtotalConsumo = 0;
+    var subtotalVentas = 0;
+
+    var filas = document.querySelectorAll('#tabla-vehiculos tbody tr');
+    filas.forEach(function(fila) {
+        var empresa = fila.getAttribute('data-empresa');
+        var viaBlanca = parseFloat(fila.querySelector('.via-blanca').value) || 0;
+        var cte = parseFloat(fila.querySelector('.cte').value) || 0;
+        var suma = viaBlanca + cte;
+
+        if (empresa.toLowerCase() === 'cte') {
+            subtotalConsumo += suma;
+        } else {
+            subtotalVentas += suma;
+        }
+    });
+
+    document.getElementById('subtotal-consumo').textContent = subtotalConsumo.toFixed(2);
+    document.getElementById('subtotal-ventas').textContent = subtotalVentas.toFixed(2);
+    document.getElementById('total-general').textContent = (subtotalConsumo + subtotalVentas).toFixed(2);
+}
+
+calcularTotales();
+</script>
+{% endblock %}
