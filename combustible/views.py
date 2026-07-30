@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Transporte
-from .forms import TransporteForm
+from .models import Transporte, SolicitudCombustible, DetalleSolicitud
+from .forms import TransporteForm, SolicitudCombustibleForm
 
 @login_required
 def dashboard(request):
@@ -65,3 +65,56 @@ def eliminar_vehiculo(request, pk):
     vehiculo.delete()
     messages.success(request, 'Vehículo eliminado correctamente.')
     return redirect('lista_transporte')
+
+@login_required
+def lista_solicitudes(request):
+    solicitudes = SolicitudCombustible.objects.all()
+    return render(request, 'combustible/lista_solicitudes.html', {'solicitudes': solicitudes})
+
+
+@login_required
+def crear_solicitud(request):
+    vehiculos = Transporte.objects.all()
+
+    if request.method == 'POST':
+        tiene_datos = False
+
+        for vehiculo in vehiculos:
+            actividad = request.POST.get(f'actividad_{vehiculo.id}', '')
+            via_blanca = request.POST.get(f'via_blanca_{vehiculo.id}', '')
+            cte = request.POST.get(f'cte_{vehiculo.id}', '')
+            ic = request.POST.get(f'ic_{vehiculo.id}', '')
+
+            if actividad or via_blanca or cte or ic:
+                tiene_datos = True
+                break
+
+        if not tiene_datos:
+            messages.error(request, 'Debe llenar al menos un vehículo para enviar la solicitud.')
+            return render(request, 'combustible/crear_solicitud.html', {'vehiculos': vehiculos})
+
+        solicitud = SolicitudCombustible.objects.create(
+            solicitante=request.user,
+            estado='pendiente'
+        )
+
+        for vehiculo in vehiculos:
+            actividad = request.POST.get(f'actividad_{vehiculo.id}', '')
+            via_blanca = request.POST.get(f'via_blanca_{vehiculo.id}', '0')
+            cte = request.POST.get(f'cte_{vehiculo.id}', '0')
+            ic = request.POST.get(f'ic_{vehiculo.id}', '0')
+
+            if actividad or via_blanca != '0' or cte != '0' or ic != '0':
+                DetalleSolicitud.objects.create(
+                    solicitud=solicitud,
+                    transporte=vehiculo,
+                    actividad=actividad,
+                    via_blanca=float(via_blanca) if via_blanca else 0,
+                    cte=float(cte) if cte else 0,
+                    ic=float(ic) if ic else 0
+                )
+
+        messages.success(request, 'Solicitud creada correctamente.')
+        return redirect('lista_solicitudes')
+
+    return render(request, 'combustible/crear_solicitud.html', {'vehiculos': vehiculos})

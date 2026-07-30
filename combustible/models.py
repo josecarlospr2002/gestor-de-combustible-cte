@@ -18,9 +18,6 @@ class Transporte(models.Model):
         max_length=50,
         verbose_name='Chapa'
     )
-    actividad = models.TextField(
-        verbose_name='Actividad'
-    )
 
     class Meta:
         verbose_name = 'Transporte'
@@ -45,11 +42,6 @@ class SolicitudCombustible(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='solicitudes'
-    )
-    cantidad_litros = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        verbose_name='Cantidad de Combustible (Litros)'
     )
     motivo = models.TextField(verbose_name='Motivo de la Solicitud')
     estado = models.CharField(
@@ -76,3 +68,41 @@ class SolicitudCombustible(models.Model):
 
     def __str__(self):
         return f"Solicitud #{self.id} - {self.solicitante} - {self.estado}"
+
+class DetalleSolicitud(models.Model):
+    solicitud = models.ForeignKey(
+        SolicitudCombustible,
+        on_delete=models.CASCADE,
+        related_name='detalles'
+    )
+    transporte = models.ForeignKey(
+        Transporte,
+        on_delete=models.CASCADE,
+        verbose_name='Vehículo'
+    )
+    actividad = models.CharField(
+        max_length=50,
+        verbose_name='Actividad'
+    )
+    via_blanca = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='Vía Blanca'
+    )
+    cte = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='CTE'
+    )
+    ic = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name='I/C'
+    )
+
+    class Meta:
+        verbose_name = 'Detalle de Solicitud'
+        verbose_name_plural = 'Detalles de Solicitudes'
+
+    def __str__(self):
+        return f"{self.transporte.chapa} - {self.solicitud}"

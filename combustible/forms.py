@@ -1,34 +1,26 @@
 from django import forms
-from .models import SolicitudCombustible, Transporte
+from .models import SolicitudCombustible, Transporte, DetalleSolicitud
 
 
 class SolicitudCombustibleForm(forms.ModelForm):
     class Meta:
         model = SolicitudCombustible
-        fields = ['cantidad_litros', 'motivo']
+        fields = ['motivo']
         widgets = {
-            'cantidad_litros': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ingrese la cantidad en litros',
-                'min': '1',
-                'step': '0.01'
-            }),
             'motivo': forms.Textarea(attrs={
                 'class': 'form-control',
                 'placeholder': 'Describa el motivo de la solicitud',
-                'rows': '4'
+                'rows': '3'
             }),
         }
         labels = {
-            'cantidad_litros': 'Cantidad de Combustible (Litros)',
             'motivo': 'Motivo de la Solicitud',
         }
-
 
 class TransporteForm(forms.ModelForm):
     class Meta:
         model = Transporte
-        fields = '__all__'
+        fields = ['tipo_combustible', 'empresa', 'tipo_vehiculo', 'chapa']
         widgets = {
             'tipo_combustible': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -46,22 +38,51 @@ class TransporteForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Ingrese la chapa'
             }),
-            'actividad': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Ingrese la actividad'
-            }),
         }
         labels = {
             'tipo_combustible': 'Tipo de Combustible',
             'empresa': 'Empresa',
             'tipo_vehiculo': 'Tipo de Vehículo',
             'chapa': 'Chapa',
-            'actividad': 'Actividad',
         }
         error_messages = {
             'tipo_combustible': {'required': 'Rellene todos los campos, por favor.'},
             'empresa': {'required': 'Rellene todos los campos, por favor.'},
             'tipo_vehiculo': {'required': 'Rellene todos los campos, por favor.'},
             'chapa': {'required': 'Rellene todos los campos, por favor.'},
-            'actividad': {'required': 'Rellene todos los campos, por favor.'},
+        }
+
+class DetalleSolicitudForm(forms.ModelForm):
+    class Meta:
+        model = DetalleSolicitud
+        fields = ['actividad', 'via_blanca', 'cte', 'ic']
+        widgets = {
+            'actividad': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'Actividad'
+            }),
+            'via_blanca': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'cte': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0'
+            }),
+            'ic': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0'
+            }),
+        }
+        labels = {
+            'actividad': '',
+            'via_blanca': '',
+            'cte': '',
+            'ic': '',
         }
