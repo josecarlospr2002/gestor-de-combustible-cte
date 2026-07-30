@@ -50,6 +50,16 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
 .btn-quitar:hover {
     color: #a71d2a;
 }
+.totales {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+.totales .total-item {
+    font-size: 1rem;
+    font-weight: 600;
+}
 </style>
 
 <div class="row justify-content-center mt-3">
@@ -63,6 +73,21 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
             <div class="card-body p-4 bg-light">
                 <form method="post" id="form-solicitud">
                     {% csrf_token %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary">Nombre de la Solicitud</label>
+                            <input type="text" name="nombre" class="form-control" placeholder="Opcional: nombre de la solicitud">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary">Fecha y Hora *</label>
+                            <input type="datetime-local" name="fecha_hora" id="fecha_hora" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary">Descripción</label>
+                            <input type="text" name="descripcion" class="form-control" placeholder="Opcional: descripción">
+                        </div>
+                    </div>
 
                     <div class="tabla-vehiculos">
                         <table class="table table-hover mb-0" id="tabla-vehiculos">
@@ -81,7 +106,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                             </thead>
                             <tbody>
                                 {% for vehiculo in vehiculos %}
-                                <tr id="fila-{{ vehiculo.id }}">
+                                <tr id="fila-{{ vehiculo.id }}" data-empresa="{{ vehiculo.empresa }}">
                                     <td>{{ vehiculo.tipo_combustible }}</td>
                                     <td>{{ vehiculo.empresa }}</td>
                                     <td>{{ vehiculo.tipo_vehiculo }}</td>
@@ -90,13 +115,13 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                                         <input type="text" name="actividad_{{ vehiculo.id }}" class="form-control form-control-sm" placeholder="Actividad">
                                     </td>
                                     <td>
-                                        <input type="number" name="via_blanca_{{ vehiculo.id }}" class="form-control form-control-sm" placeholder="0.00" step="0.01" min="0">
+                                        <input type="number" name="via_blanca_{{ vehiculo.id }}" class="form-control form-control-sm via-blanca" placeholder="0" step="0.01" min="0" oninput="calcularTotales()">
                                     </td>
                                     <td>
-                                        <input type="number" name="cte_{{ vehiculo.id }}" class="form-control form-control-sm" placeholder="0.00" step="0.01" min="0">
+                                        <input type="number" name="cte_{{ vehiculo.id }}" class="form-control form-control-sm cte" placeholder="0" step="0.01" min="0" oninput="calcularTotales()">
                                     </td>
                                     <td>
-                                        <input type="number" name="ic_{{ vehiculo.id }}" class="form-control form-control-sm" placeholder="0.00" step="0.01" min="0">
+                                        <input type="number" name="ic_{{ vehiculo.id }}" class="form-control form-control-sm" placeholder="0" step="0.01" min="0">
                                     </td>
                                     <td>
                                         <button type="button" class="btn-quitar" onclick="quitarFila({{ vehiculo.id }})" title="Quitar vehículo">
@@ -115,6 +140,23 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                         </table>
                     </div>
 
+                    <div class="totales">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <span class="total-item text-primary">Subtotal de Consumo: </span>
+                                <strong id="subtotal-consumo">0.00</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="total-item text-success">Subtotal de Ventas: </span>
+                                <strong id="subtotal-ventas">0.00</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="total-item" style="color: #6f42c1;">Total General: </span>
+                                <strong id="total-general">0.00</strong>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'lista_solicitudes' %}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Volver
@@ -124,7 +166,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                                 <i class="bi bi-arrow-counterclockwise"></i> Restablecer Valores Originales
                             </button>
                             <button type="submit" class="btn text-white fw-bold" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
-                                <i class="bi bi-send"></i> Enviar Solicitud
+                                <i class="bi bi-send"></i> Guardar Solicitud
                             </button>
                         </div>
                     </div>
@@ -133,6 +175,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
         </div>
     </div>
 </div>
+<div class="pb-4"></div>
 
 <script>
 var filasEliminadas = {};
@@ -142,6 +185,7 @@ function quitarFila(id) {
     if (fila) {
         filasEliminadas[id] = fila;
         fila.remove();
+        calcularTotales();
     }
 }
 
@@ -157,6 +201,40 @@ function restablecerValores() {
     inputs.forEach(function(input) {
         input.value = '';
     });
+    calcularTotales();
 }
+
+function calcularTotales() {
+    var subtotalConsumo = 0;
+    var subtotalVentas = 0;
+
+    var filas = document.querySelectorAll('#tabla-vehiculos tbody tr');
+    filas.forEach(function(fila) {
+        var empresa = fila.getAttribute('data-empresa');
+        var viaBlanca = parseFloat(fila.querySelector('.via-blanca').value) || 0;
+        var cte = parseFloat(fila.querySelector('.cte').value) || 0;
+        var suma = viaBlanca + cte;
+
+        if (empresa.toLowerCase() === 'cte') {
+            subtotalConsumo += suma;
+        } else {
+            subtotalVentas += suma;
+        }
+    });
+
+    document.getElementById('subtotal-consumo').textContent = subtotalConsumo.toFixed(2);
+    document.getElementById('subtotal-ventas').textContent = subtotalVentas.toFixed(2);
+    document.getElementById('total-general').textContent = (subtotalConsumo + subtotalVentas).toFixed(2);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var now = new Date();
+    var fecha = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + 'T' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('fecha_hora').value = fecha;
+});
 </script>
 {% endblock %}

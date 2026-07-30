@@ -1,12 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
 from .models import Transporte, SolicitudCombustible, DetalleSolicitud
-from .forms import TransporteForm, SolicitudCombustibleForm
+from .forms import TransporteForm
+
 
 @login_required
 def dashboard(request):
     return render(request, 'combustible/dashboard.html')
+
 
 @login_required
 def lista_transporte(request):
@@ -28,6 +31,7 @@ def lista_transporte(request):
 
     return render(request, 'combustible/lista_transporte.html', {'vehiculos': vehiculos})
 
+
 @login_required
 def crear_vehiculo(request):
     if request.method == 'POST':
@@ -42,6 +46,7 @@ def crear_vehiculo(request):
         form = TransporteForm()
 
     return render(request, 'combustible/crear_vehiculo.html', {'form': form})
+
 
 @login_required
 def editar_vehiculo(request, pk):
@@ -59,12 +64,14 @@ def editar_vehiculo(request, pk):
 
     return render(request, 'combustible/editar_vehiculo.html', {'form': form, 'vehiculo': vehiculo})
 
+
 @login_required
 def eliminar_vehiculo(request, pk):
     vehiculo = get_object_or_404(Transporte, pk=pk)
     vehiculo.delete()
     messages.success(request, 'Vehículo eliminado correctamente.')
     return redirect('lista_transporte')
+
 
 @login_required
 def lista_solicitudes(request):
@@ -77,14 +84,20 @@ def crear_solicitud(request):
     vehiculos = Transporte.objects.all()
 
     if request.method == 'POST':
-        tiene_datos = False
+        nombre = request.POST.get('nombre', '')
+        fecha_hora = request.POST.get('fecha_hora', '')
+        descripcion = request.POST.get('descripcion', '')
 
+        if not fecha_hora:
+            messages.error(request, 'La fecha y hora son obligatorias.')
+            return render(request, 'combustible/crear_solicitud.html', {'vehiculos': vehiculos})
+
+        tiene_datos = False
         for vehiculo in vehiculos:
             actividad = request.POST.get(f'actividad_{vehiculo.id}', '')
             via_blanca = request.POST.get(f'via_blanca_{vehiculo.id}', '')
             cte = request.POST.get(f'cte_{vehiculo.id}', '')
             ic = request.POST.get(f'ic_{vehiculo.id}', '')
-
             if actividad or via_blanca or cte or ic:
                 tiene_datos = True
                 break
@@ -93,8 +106,13 @@ def crear_solicitud(request):
             messages.error(request, 'Debe llenar al menos un vehículo para enviar la solicitud.')
             return render(request, 'combustible/crear_solicitud.html', {'vehiculos': vehiculos})
 
+        if not nombre:
+            nombre = f"Solicitud de Combustible para el día {fecha_hora}"
+
         solicitud = SolicitudCombustible.objects.create(
-            solicitante=request.user,
+            nombre=nombre,
+            fecha_hora=fecha_hora,
+            descripcion=descripcion,
             estado='pendiente'
         )
 

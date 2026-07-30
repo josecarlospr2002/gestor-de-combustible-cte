@@ -5,16 +5,26 @@ from .models import SolicitudCombustible, Transporte, DetalleSolicitud
 class SolicitudCombustibleForm(forms.ModelForm):
     class Meta:
         model = SolicitudCombustible
-        fields = ['motivo']
+        fields = ['nombre', 'fecha_hora', 'descripcion']
         widgets = {
-            'motivo': forms.Textarea(attrs={
+            'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Describa el motivo de la solicitud',
-                'rows': '3'
+                'placeholder': 'Opcional: nombre de la solicitud'
+            }),
+            'fecha_hora': forms.DateTimeInput(attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Opcional: descripción de la solicitud',
+                'rows': '2'
             }),
         }
         labels = {
-            'motivo': 'Motivo de la Solicitud',
+            'nombre': 'Nombre de la Solicitud',
+            'fecha_hora': 'Fecha y Hora',
+            'descripcion': 'Descripción',
         }
 
 class TransporteForm(forms.ModelForm):

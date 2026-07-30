@@ -29,45 +29,39 @@ class Transporte(models.Model):
 
 class SolicitudCombustible(models.Model):
     ESTADOS = [
-        ('borrador', 'Borrador'),
         ('pendiente', 'Pendiente de Aprobación'),
         ('aprobada', 'Aprobada por Director'),
         ('rechazada', 'Rechazada por Director'),
-        ('en_proceso_petroleo', 'En Proceso - Dpto. Petróleo'),
-        ('enviada_almacen', 'Enviada a Almacén'),
-        ('distribuida', 'Combustible Distribuido'),
     ]
 
-    solicitante = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='solicitudes'
+    nombre = models.CharField(
+        max_length=100,
+        blank=True,
+        verbose_name='Nombre de la Solicitud'
     )
-    motivo = models.TextField(verbose_name='Motivo de la Solicitud')
+    fecha_hora = models.DateTimeField(
+        verbose_name='Fecha y Hora'
+    )
+    descripcion = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='Descripción'
+    )
     estado = models.CharField(
         max_length=30,
         choices=ESTADOS,
-        default='borrador'
+        default='pendiente'
     )
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_modificacion = models.DateTimeField(auto_now=True)
-    fecha_aprobacion = models.DateTimeField(null=True, blank=True)
-    director = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='aprobaciones'
-    )
-    comentario_director = models.TextField(blank=True, null=True)
 
     class Meta:
         verbose_name = 'Solicitud de Combustible'
         verbose_name_plural = 'Solicitudes de Combustible'
-        ordering = ['-fecha_creacion']
+        ordering = ['-fecha_hora']
 
     def __str__(self):
-        return f"Solicitud #{self.id} - {self.solicitante} - {self.estado}"
+        if self.nombre:
+            return self.nombre
+        return f"Solicitud #{self.id} - {self.fecha_hora.strftime('%d/%m/%Y')}"
 
 class DetalleSolicitud(models.Model):
     solicitud = models.ForeignKey(
