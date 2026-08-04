@@ -30,6 +30,7 @@ class SolicitudCombustible(models.Model):
     fecha_hora = models.DateTimeField(verbose_name='Fecha y Hora')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción')
     estado = models.CharField(max_length=30, choices=ESTADOS, default='borrador')
+    motivo_rechazo = models.TextField(blank=True, null=True, verbose_name='Motivo del Rechazo')
 
     class Meta:
         verbose_name = 'Solicitud de Combustible'

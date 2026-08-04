@@ -340,6 +340,30 @@ def editar_solicitud(request, pk):
         'vehiculos': vehiculos,
     })
 
+@login_required
+def aprobar_solicitud(request, pk):
+    if request.user.departamento not in ['admin', 'directivo']:
+        messages.error(request, 'No tiene permisos para aprobar solicitudes.')
+        return redirect('lista_solicitudes')
+
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='pendiente')
+    solicitud.estado = 'aprobada'
+    solicitud.save()
+    messages.success(request, f'Solicitud "{solicitud.nombre}" aprobada correctamente.')
+    return redirect('lista_solicitudes')
+
+@login_required
+def rechazar_solicitud(request, pk):
+    if request.user.departamento not in ['admin', 'directivo']:
+        messages.error(request, 'No tiene permisos para rechazar solicitudes.')
+        return redirect('lista_solicitudes')
+
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='pendiente')
+    solicitud.estado = 'rechazada'
+    solicitud.motivo_rechazo = request.GET.get('motivo', '')
+    solicitud.save()
+    messages.success(request, f'Solicitud "{solicitud.nombre}" rechazada.')
+    return redirect('lista_solicitudes')
 
 @login_required
 def eliminar_solicitud(request, pk):
