@@ -11,11 +11,11 @@ class SolicitudCombustibleAdmin(admin.ModelAdmin):
 
 @admin.register(Transporte)
 class TransporteAdmin(admin.ModelAdmin):
-    list_display = ('chapa', 'tipo_vehiculo', 'tipo_combustible', 'empresa')
+    list_display = ('chapa', 'tipo_vehiculo', 'tipo_combustible', 'empresa', 'ic')
     list_filter = ('tipo_combustible', 'empresa', 'tipo_vehiculo')
     search_fields = ('chapa', 'tipo_vehiculo', 'empresa')
 
 
 @admin.register(DetalleSolicitud)
 class DetalleSolicitudAdmin(admin.ModelAdmin):
-    list_display = ('solicitud', 'transporte', 'actividad', 'via_blanca', 'cte', 'ic')
+    list_display = ('solicitud', 'transporte', 'actividad', 'cant_abastecer')

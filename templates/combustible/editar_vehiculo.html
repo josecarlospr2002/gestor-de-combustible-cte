@@ -33,6 +33,10 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                         <label for="id_chapa" class="form-label fw-bold text-secondary">{{ form.chapa.label }}</label>
                         {{ form.chapa }}
                     </div>
+                    <div class="mb-4">
+                        <label for="id_ic" class="form-label fw-bold text-secondary">{{ form.ic.label }}</label>
+                        {{ form.ic }}
+                    </div>
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'lista_transporte' %}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Volver

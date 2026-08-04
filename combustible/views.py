@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from .models import Transporte, SolicitudCombustible, DetalleSolicitud
 from .forms import TransporteForm
 
@@ -87,24 +88,70 @@ def crear_solicitud(request):
         nombre = request.POST.get('nombre', '')
         fecha_hora = request.POST.get('fecha_hora', '')
         descripcion = request.POST.get('descripcion', '')
+        vehiculos_quitados = request.POST.get('vehiculos_quitados', '')
 
         if not fecha_hora:
             messages.error(request, 'La fecha y hora son obligatorias.')
-            return render(request, 'combustible/crear_solicitud.html', {'vehiculos': vehiculos})
+            return render(request, 'combustible/crear_solicitud.html', {
+                'vehiculos': vehiculos,
+                'nombre_temp': nombre,
+                'fecha_hora_temp': fecha_hora,
+                'descripcion_temp': descripcion,
+                'vehiculos_quitados': vehiculos_quitados,
+            })
+
+        # Validar que la fecha no sea futura
+        fecha_parseada = parse_datetime(fecha_hora)
+        if fecha_parseada:
+            if timezone.is_naive(fecha_parseada):
+                fecha_parseada = timezone.make_aware(fecha_parseada)
+            if fecha_parseada > timezone.now():
+                for v in vehiculos:
+                    v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                    v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+                messages.error(request, 'No se puede registrar una solicitud con fecha futura.')
+                return render(request, 'combustible/crear_solicitud.html', {
+                    'vehiculos': vehiculos,
+                    'nombre_temp': nombre,
+                    'fecha_hora_temp': fecha_hora,
+                    'descripcion_temp': descripcion,
+                    'vehiculos_quitados': vehiculos_quitados,
+                })
 
         tiene_datos = False
         for vehiculo in vehiculos:
-            actividad = request.POST.get(f'actividad_{vehiculo.id}', '')
-            via_blanca = request.POST.get(f'via_blanca_{vehiculo.id}', '')
-            cte = request.POST.get(f'cte_{vehiculo.id}', '')
-            ic = request.POST.get(f'ic_{vehiculo.id}', '')
-            if actividad or via_blanca or cte or ic:
+            if str(vehiculo.id) in vehiculos_quitados.split(','):
+                continue
+            actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
+            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '').strip()
+
+            if actividad and cant_abastecer and cant_abastecer != '0':
                 tiene_datos = True
-                break
+            elif (actividad and not cant_abastecer) or (not actividad and cant_abastecer and cant_abastecer != '0') or (actividad and cant_abastecer == '0'):
+                for v in vehiculos:
+                    v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                    v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+                messages.error(request, 'Hay campo/s de Actividad o de Cant. a Abastecer sin rellenar.')
+                return render(request, 'combustible/crear_solicitud.html', {
+                    'vehiculos': vehiculos,
+                    'nombre_temp': nombre,
+                    'fecha_hora_temp': fecha_hora,
+                    'descripcion_temp': descripcion,
+                    'vehiculos_quitados': vehiculos_quitados,
+                })
 
         if not tiene_datos:
-            messages.error(request, 'Debe llenar al menos un vehículo para enviar la solicitud.')
-            return render(request, 'combustible/crear_solicitud.html', {'vehiculos': vehiculos})
+            for v in vehiculos:
+                v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+            messages.error(request, 'Debe llenar al menos un vehículo con ambos campos para guardar la solicitud.')
+            return render(request, 'combustible/crear_solicitud.html', {
+                'vehiculos': vehiculos,
+                'nombre_temp': nombre,
+                'fecha_hora_temp': fecha_hora,
+                'descripcion_temp': descripcion,
+                'vehiculos_quitados': vehiculos_quitados,
+            })
 
         if not nombre:
             nombre = f"Solicitud de Combustible para el día {fecha_hora}"
@@ -117,19 +164,17 @@ def crear_solicitud(request):
         )
 
         for vehiculo in vehiculos:
-            actividad = request.POST.get(f'actividad_{vehiculo.id}', '')
-            via_blanca = request.POST.get(f'via_blanca_{vehiculo.id}', '0')
-            cte = request.POST.get(f'cte_{vehiculo.id}', '0')
-            ic = request.POST.get(f'ic_{vehiculo.id}', '0')
+            if str(vehiculo.id) in vehiculos_quitados.split(','):
+                continue
+            actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
+            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '0').strip()
 
-            if actividad or via_blanca != '0' or cte != '0' or ic != '0':
+            if actividad and cant_abastecer and cant_abastecer != '0':
                 DetalleSolicitud.objects.create(
                     solicitud=solicitud,
                     transporte=vehiculo,
                     actividad=actividad,
-                    via_blanca=float(via_blanca) if via_blanca else 0,
-                    cte=float(cte) if cte else 0,
-                    ic=float(ic) if ic else 0
+                    cant_abastecer=float(cant_abastecer)
                 )
 
         messages.success(request, 'Solicitud creada correctamente.')
@@ -168,23 +213,82 @@ def editar_solicitud(request, pk):
     for d in detalles:
         detalles_dict[d.transporte_id] = d
 
-    for v in vehiculos:
-        detalle = detalles_dict.get(v.id)
-        if detalle:
-            v.detalle_actividad = detalle.actividad if detalle.actividad else ''
-            v.detalle_via_blanca = str(detalle.via_blanca) if detalle.via_blanca else '0'
-            v.detalle_cte = str(detalle.cte) if detalle.cte else '0'
-            v.detalle_ic = str(detalle.ic) if detalle.ic else '0'
-        else:
-            v.detalle_actividad = ''
-            v.detalle_via_blanca = '0'
-            v.detalle_cte = '0'
-            v.detalle_ic = '0'
-
     if request.method == 'POST':
         nombre = request.POST.get('nombre', '')
         fecha_hora = request.POST.get('fecha_hora', '')
         descripcion = request.POST.get('descripcion', '')
+        vehiculos_quitados = request.POST.get('vehiculos_quitados', '')
+
+        if not fecha_hora:
+            for v in vehiculos:
+                det = detalles_dict.get(v.id)
+                v.actividad_temp = request.POST.get(f'actividad_{v.id}', det.actividad if det else '')
+                v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', str(det.cant_abastecer) if det else '')
+            messages.error(request, 'La fecha y hora son obligatorias.')
+            return render(request, 'combustible/editar_solicitud.html', {
+                'solicitud': solicitud,
+                'vehiculos': vehiculos,
+                'nombre_temp': nombre,
+                'fecha_hora_temp': fecha_hora,
+                'descripcion_temp': descripcion,
+                'vehiculos_quitados': vehiculos_quitados,
+            })
+
+        # Validar que la fecha no sea futura
+        fecha_parseada = parse_datetime(fecha_hora)
+        if fecha_parseada:
+            if timezone.is_naive(fecha_parseada):
+                fecha_parseada = timezone.make_aware(fecha_parseada)
+            if fecha_parseada > timezone.now():
+                for v in vehiculos:
+                    v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                    v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+                messages.error(request, 'No se puede registrar una solicitud con fecha futura.')
+                return render(request, 'combustible/editar_solicitud.html', {
+                    'solicitud': solicitud,
+                    'vehiculos': vehiculos,
+                    'nombre_temp': nombre,
+                    'fecha_hora_temp': fecha_hora,
+                    'descripcion_temp': descripcion,
+                    'vehiculos_quitados': vehiculos_quitados,
+                })
+
+        tiene_datos = False
+        for vehiculo in vehiculos:
+            if str(vehiculo.id) in vehiculos_quitados.split(','):
+                continue
+            actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
+            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '').strip()
+
+            if actividad and cant_abastecer and cant_abastecer != '0':
+                tiene_datos = True
+            elif (actividad and not cant_abastecer) or (not actividad and cant_abastecer and cant_abastecer != '0') or (actividad and cant_abastecer == '0'):
+                for v in vehiculos:
+                    v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                    v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+                messages.error(request, 'Hay campo/s de Actividad o de Cant. a Abastecer sin rellenar.')
+                return render(request, 'combustible/editar_solicitud.html', {
+                    'solicitud': solicitud,
+                    'vehiculos': vehiculos,
+                    'nombre_temp': nombre,
+                    'fecha_hora_temp': fecha_hora,
+                    'descripcion_temp': descripcion,
+                    'vehiculos_quitados': vehiculos_quitados,
+                })
+
+        if not tiene_datos:
+            for v in vehiculos:
+                v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+            messages.error(request, 'Debe llenar al menos un vehículo con ambos campos para guardar la solicitud.')
+            return render(request, 'combustible/editar_solicitud.html', {
+                'solicitud': solicitud,
+                'vehiculos': vehiculos,
+                'nombre_temp': nombre,
+                'fecha_hora_temp': fecha_hora,
+                'descripcion_temp': descripcion,
+                'vehiculos_quitados': vehiculos_quitados,
+            })
 
         solicitud.nombre = nombre
         solicitud.fecha_hora = fecha_hora
@@ -194,23 +298,31 @@ def editar_solicitud(request, pk):
         detalles.delete()
 
         for vehiculo in vehiculos:
-            actividad = request.POST.get(f'actividad_{vehiculo.id}', '')
-            via_blanca = request.POST.get(f'via_blanca_{vehiculo.id}', '0')
-            cte = request.POST.get(f'cte_{vehiculo.id}', '0')
-            ic = request.POST.get(f'ic_{vehiculo.id}', '0')
+            if str(vehiculo.id) in vehiculos_quitados.split(','):
+                continue
+            actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
+            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '0').strip()
 
-            if actividad or via_blanca != '0' or cte != '0' or ic != '0':
+            if actividad and cant_abastecer and cant_abastecer != '0':
                 DetalleSolicitud.objects.create(
                     solicitud=solicitud,
                     transporte=vehiculo,
                     actividad=actividad,
-                    via_blanca=float(via_blanca) if via_blanca else 0,
-                    cte=float(cte) if cte else 0,
-                    ic=float(ic) if ic else 0
+                    cant_abastecer=float(cant_abastecer)
                 )
 
         messages.success(request, 'Solicitud actualizada correctamente.')
         return redirect('lista_solicitudes')
+
+    # GET: cargar datos guardados
+    for v in vehiculos:
+        detalle = detalles_dict.get(v.id)
+        if detalle:
+            v.detalle_actividad = detalle.actividad if detalle.actividad else ''
+            v.detalle_cant_abastecer = str(detalle.cant_abastecer) if detalle.cant_abastecer else ''
+        else:
+            v.detalle_actividad = ''
+            v.detalle_cant_abastecer = ''
 
     return render(request, 'combustible/editar_solicitud.html', {
         'solicitud': solicitud,

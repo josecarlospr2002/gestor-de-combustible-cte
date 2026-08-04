@@ -127,6 +127,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                     <th>Tipo de Vehículo</th>
                     <th>Tipo de Combustible</th>
                     <th>Empresa</th>
+                    <th>I/C</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -137,6 +138,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                     <td>{{ vehiculo.tipo_vehiculo }}</td>
                     <td>{{ vehiculo.tipo_combustible }}</td>
                     <td>{{ vehiculo.empresa }}</td>
+                    <td>{{ vehiculo.ic }}</td>
                     <td>
                         {% if user.departamento == 'admin' or user.departamento == 'transporte' %}
                         <a href="{% url 'editar_vehiculo' vehiculo.id %}" class="btn btn-primary btn-sm" title="Modificar Registro">
@@ -154,7 +156,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-5">
+                    <td colspan="6" class="text-center text-muted py-5">
                         <i class="bi bi-inbox" style="font-size: 3rem;"></i>
                         <p class="mt-3 fs-5">No se encontraron vehículos.</p>
                         {% if request.GET.chapa or request.GET.tipo_vehiculo or request.GET.tipo_combustible or request.GET.empresa %}

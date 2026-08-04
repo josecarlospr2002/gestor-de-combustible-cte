@@ -84,8 +84,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                         <th>Tipo de Vehículo</th>
                         <th>Chapa</th>
                         <th>Actividad</th>
-                        <th>Vía Blanca</th>
-                        <th>CTE</th>
+                        <th>Cant. a Abastecer</th>
                         <th>I/C</th>
                     </tr>
                 </thead>
@@ -97,13 +96,12 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                         <td>{{ detalle.transporte.tipo_vehiculo }}</td>
                         <td><strong>{{ detalle.transporte.chapa }}</strong></td>
                         <td>{{ detalle.actividad|default:"-" }}</td>
-                        <td>{{ detalle.via_blanca|floatformat:2 }}</td>
-                        <td>{{ detalle.cte|floatformat:2 }}</td>
-                        <td>{{ detalle.ic|floatformat:2 }}</td>
+                        <td>{{ detalle.cant_abastecer|floatformat:2 }}</td>
+                        <td>{{ detalle.transporte.ic|floatformat:2 }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">Sin detalles</td>
+                        <td colspan="7" class="text-center text-muted py-4">Sin detalles</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -131,21 +129,16 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
 document.addEventListener('DOMContentLoaded', function() {
     var subtotalConsumo = 0;
     var subtotalVentas = 0;
-
     var filas = document.querySelectorAll('.tabla-vehiculos tbody tr');
     filas.forEach(function(fila) {
         var empresa = fila.cells[1].textContent.trim();
-        var viaBlanca = parseFloat(fila.cells[5].textContent.replace(',', '.')) || 0;
-        var cte = parseFloat(fila.cells[6].textContent.replace(',', '.')) || 0;
-        var suma = viaBlanca + cte;
-
-        if (empresa.toLowerCase() === 'cte') {
-            subtotalConsumo += suma;
+        var cantAbastecer = parseFloat(fila.cells[5].textContent.replace(',', '.')) || 0;
+        if (empresa.toLowerCase() === 'cte' || empresa.toLowerCase() === 'ausa' || empresa.toLowerCase() === 'ucm') {
+            subtotalConsumo += cantAbastecer;
         } else {
-            subtotalVentas += suma;
+            subtotalVentas += cantAbastecer;
         }
     });
-
     document.getElementById('subtotal-consumo').textContent = subtotalConsumo.toFixed(2);
     document.getElementById('subtotal-ventas').textContent = subtotalVentas.toFixed(2);
     document.getElementById('total-general').textContent = (subtotalConsumo + subtotalVentas).toFixed(2);

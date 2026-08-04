@@ -27,10 +27,11 @@ class SolicitudCombustibleForm(forms.ModelForm):
             'descripcion': 'Descripción',
         }
 
+
 class TransporteForm(forms.ModelForm):
     class Meta:
         model = Transporte
-        fields = ['tipo_combustible', 'empresa', 'tipo_vehiculo', 'chapa']
+        fields = ['tipo_combustible', 'empresa', 'tipo_vehiculo', 'chapa', 'ic']
         widgets = {
             'tipo_combustible': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -48,51 +49,42 @@ class TransporteForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'Ingrese la chapa'
             }),
+            'ic': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0'
+            }),
         }
         labels = {
             'tipo_combustible': 'Tipo de Combustible',
             'empresa': 'Empresa',
             'tipo_vehiculo': 'Tipo de Vehículo',
             'chapa': 'Chapa',
+            'ic': 'I/C',
         }
         error_messages = {
             'tipo_combustible': {'required': 'Rellene todos los campos, por favor.'},
             'empresa': {'required': 'Rellene todos los campos, por favor.'},
             'tipo_vehiculo': {'required': 'Rellene todos los campos, por favor.'},
             'chapa': {'required': 'Rellene todos los campos, por favor.'},
+            'ic': {'required': 'Rellene todos los campos, por favor.'},
         }
+
 
 class DetalleSolicitudForm(forms.ModelForm):
     class Meta:
         model = DetalleSolicitud
-        fields = ['actividad', 'via_blanca', 'cte', 'ic']
+        fields = ['actividad', 'cant_abastecer']
         widgets = {
             'actividad': forms.TextInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': 'Actividad'
             }),
-            'via_blanca': forms.NumberInput(attrs={
+            'cant_abastecer': forms.NumberInput(attrs={
                 'class': 'form-control form-control-sm',
                 'placeholder': '0.00',
                 'step': '0.01',
                 'min': '0'
             }),
-            'cte': forms.NumberInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'ic': forms.NumberInput(attrs={
-                'class': 'form-control form-control-sm',
-                'placeholder': '0.00',
-                'step': '0.01',
-                'min': '0'
-            }),
-        }
-        labels = {
-            'actividad': '',
-            'via_blanca': '',
-            'cte': '',
-            'ic': '',
         }
