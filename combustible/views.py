@@ -77,8 +77,19 @@ def eliminar_vehiculo(request, pk):
 @login_required
 def lista_solicitudes(request):
     solicitudes = SolicitudCombustible.objects.all()
-    return render(request, 'combustible/lista_solicitudes.html', {'solicitudes': solicitudes})
 
+    nombre = request.GET.get('nombre', '')
+    fecha = request.GET.get('fecha', '')
+    estado = request.GET.get('estado', '')
+
+    if nombre:
+        solicitudes = solicitudes.filter(nombre__icontains=nombre)
+    if fecha:
+        solicitudes = solicitudes.filter(fecha_hora__date=fecha)
+    if estado:
+        solicitudes = solicitudes.filter(estado=estado)
+
+    return render(request, 'combustible/lista_solicitudes.html', {'solicitudes': solicitudes})
 
 @login_required
 def crear_solicitud(request):
