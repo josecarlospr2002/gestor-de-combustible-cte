@@ -38,7 +38,7 @@
         <span class="text-white me-3">
             <i class="bi bi-person-circle"></i> {{ user.get_full_name }} - {{ user.get_departamento_display }}
         </span>
-        <a href="{% url 'logout' %}" class="btn btn-danger btn-sm" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <a href="#" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarLogoutModal">
             <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
         </a>
         <form id="logout-form" action="{% url 'logout' %}" method="post" style="display: none;">
@@ -63,6 +63,34 @@
         {% endblock %}
     </div>
 
+    <!-- Modal Confirmar Logout -->
+    <div class="modal fade" id="confirmarLogoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #dc3545, #6f42c1);">
+                    <h5 class="modal-title">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="bi bi-door-open text-danger" style="font-size: 3rem;"></i>
+                    <p class="mt-3 fs-5">¿Está seguro de que desea terminar su sesión?</p>
+                    <small class="text-muted">Deberá autenticarse nuevamente para acceder al sistema.</small>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <a href="#" class="btn btn-danger" onclick="document.getElementById('logout-form').submit();">
+                        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Envío -->
     <div class="modal fade" id="confirmarEnviarModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow-lg">
@@ -89,6 +117,7 @@
         </div>
     </div>
 
+    <!-- Modal Confirmar Eliminación -->
     <div class="modal fade" id="confirmarEliminar" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow-lg">

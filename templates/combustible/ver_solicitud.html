@@ -39,6 +39,10 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
     padding: 1rem;
     margin-top: 1rem;
 }
+.botones-accion {
+    margin-top: 2.5rem;
+    padding-bottom: 2rem;
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -62,14 +66,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
             </h5>
             <div class="d-flex align-items-center">
                 <span class="mx-4">{{ solicitud.fecha_hora|date:"d/m/Y H:i" }}</span>
-                <span class="badge
-                    {% if solicitud.estado == 'aprobada' %}bg-success
-                    {% elif solicitud.estado == 'rechazada' %}bg-danger
-                    {% elif solicitud.estado == 'pendiente' %}bg-warning text-dark
-                    {% elif solicitud.estado == 'borrador' %}bg-secondary
-                    {% endif %} fs-6">
-                    {{ solicitud.get_estado_display }}
-                </span>
+                <span class="fw-bold">{{ solicitud.get_estado_display }}</span>
             </div>
         </div>
     </div>
@@ -135,12 +132,12 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
             </div>
         </div>
 
-        {% if solicitud.estado == 'pendiente' and user.departamento == 'admin' or user.departamento == 'directivo' %}
-        <div class="d-flex justify-content-center gap-3 mt-4">
-            <button type="button" class="btn btn-success btn-lg fw-bold" data-bs-toggle="modal" data-bs-target="#aprobarModal">
+        {% if solicitud.estado == 'pendiente' and user.departamento == 'admin' or solicitud.estado == 'pendiente' and user.departamento == 'directivo' %}
+        <div class="botones-accion d-flex justify-content-center gap-5">
+            <button type="button" class="btn btn-success btn-lg fw-bold px-5" data-bs-toggle="modal" data-bs-target="#aprobarModal">
                 <i class="bi bi-check-circle-fill"></i> Aprobar Solicitud
             </button>
-            <button type="button" class="btn btn-danger btn-lg fw-bold" data-bs-toggle="modal" data-bs-target="#rechazarModal">
+            <button type="button" class="btn btn-danger btn-lg fw-bold px-5" data-bs-toggle="modal" data-bs-target="#rechazarModal">
                 <i class="bi bi-x-circle-fill"></i> Rechazar Solicitud
             </button>
         </div>
