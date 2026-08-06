@@ -8,31 +8,9 @@ from .models import Transporte, SolicitudCombustible, DetalleSolicitud
 from .forms import TransporteForm
 
 
-@login_required
-def dashboard(request):
-    return render(request, 'combustible/dashboard.html')
-
-
-@login_required
-def lista_transporte(request):
-    vehiculos = Transporte.objects.all()
-
-    chapa = request.GET.get('chapa', '')
-    tipo_vehiculo = request.GET.get('tipo_vehiculo', '')
-    tipo_combustible = request.GET.get('tipo_combustible', '')
-    empresa = request.GET.get('empresa', '')
-
-    if chapa:
-        vehiculos = vehiculos.filter(chapa__icontains=chapa)
-    if tipo_vehiculo:
-        vehiculos = vehiculos.filter(tipo_vehiculo__icontains=tipo_vehiculo)
-    if tipo_combustible:
-        vehiculos = vehiculos.filter(tipo_combustible__icontains=tipo_combustible)
-    if empresa:
-        vehiculos = vehiculos.filter(empresa__icontains=empresa)
-
-    # Orden personalizado
-    vehiculos = vehiculos.annotate(
+def get_vehiculos_ordenados():
+    """Retorna todos los vehículos con el orden personalizado."""
+    return Transporte.objects.all().annotate(
         orden_combustible=Case(
             When(tipo_combustible__icontains='gasolina', then=Value(1)),
             When(tipo_combustible__icontains='regular', then=Value(1)),
@@ -59,6 +37,30 @@ def lista_transporte(request):
             output_field=IntegerField(),
         ),
     ).order_by('orden_combustible', 'orden_empresa', 'orden_vehiculo')
+
+
+@login_required
+def dashboard(request):
+    return render(request, 'combustible/dashboard.html')
+
+
+@login_required
+def lista_transporte(request):
+    vehiculos = get_vehiculos_ordenados()
+
+    chapa = request.GET.get('chapa', '')
+    tipo_vehiculo = request.GET.get('tipo_vehiculo', '')
+    tipo_combustible = request.GET.get('tipo_combustible', '')
+    empresa = request.GET.get('empresa', '')
+
+    if chapa:
+        vehiculos = vehiculos.filter(chapa__icontains=chapa)
+    if tipo_vehiculo:
+        vehiculos = vehiculos.filter(tipo_vehiculo__icontains=tipo_vehiculo)
+    if tipo_combustible:
+        vehiculos = vehiculos.filter(tipo_combustible__icontains=tipo_combustible)
+    if empresa:
+        vehiculos = vehiculos.filter(empresa__icontains=empresa)
 
     return render(request, 'combustible/lista_transporte.html', {'vehiculos': vehiculos})
 
@@ -124,7 +126,7 @@ def lista_solicitudes(request):
 
 @login_required
 def crear_solicitud(request):
-    vehiculos = Transporte.objects.all()
+    vehiculos = get_vehiculos_ordenados()
 
     if request.method == 'POST':
         nombre = request.POST.get('nombre', '')
@@ -238,7 +240,7 @@ def enviar_solicitud(request, pk):
 @login_required
 def ver_solicitud(request, pk):
     solicitud = get_object_or_404(SolicitudCombustible, pk=pk)
-    detalles = DetalleSolicitud.objects.filter(solicitud=solicitud)
+    detalles = DetalleSolicitud.objects.filter(solicitud=solicitud).select_related('transporte')
     return render(request, 'combustible/ver_solicitud.html', {
         'solicitud': solicitud,
         'detalles': detalles
@@ -248,7 +250,7 @@ def ver_solicitud(request, pk):
 @login_required
 def editar_solicitud(request, pk):
     solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='borrador')
-    vehiculos = Transporte.objects.all()
+    vehiculos = get_vehiculos_ordenados()
     detalles = DetalleSolicitud.objects.filter(solicitud=solicitud)
 
     detalles_dict = {}
