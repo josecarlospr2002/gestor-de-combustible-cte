@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.db.models import Case, When, Value, IntegerField
 from .models import Transporte, SolicitudCombustible, DetalleSolicitud
 from .forms import TransporteForm
 
@@ -29,6 +30,35 @@ def lista_transporte(request):
         vehiculos = vehiculos.filter(tipo_combustible__icontains=tipo_combustible)
     if empresa:
         vehiculos = vehiculos.filter(empresa__icontains=empresa)
+
+    # Orden personalizado
+    vehiculos = vehiculos.annotate(
+        orden_combustible=Case(
+            When(tipo_combustible__icontains='gasolina', then=Value(1)),
+            When(tipo_combustible__icontains='regular', then=Value(1)),
+            When(tipo_combustible__icontains='diésel', then=Value(2)),
+            When(tipo_combustible__icontains='diesel', then=Value(2)),
+            When(tipo_combustible__icontains='petróleo', then=Value(2)),
+            When(tipo_combustible__icontains='petroleo', then=Value(2)),
+            default=Value(3),
+            output_field=IntegerField(),
+        ),
+        orden_empresa=Case(
+            When(empresa__iexact='CTE', then=Value(1)),
+            When(empresa__iexact='AUSA', then=Value(2)),
+            When(empresa__iexact='UCM', then=Value(3)),
+            When(empresa__iexact='ETEP', then=Value(4)),
+            When(empresa__iexact='EMCE', then=Value(5)),
+            When(empresa__iexact='TAXI', then=Value(6)),
+            default=Value(7),
+            output_field=IntegerField(),
+        ),
+        orden_vehiculo=Case(
+            When(tipo_vehiculo__icontains='auto', then=Value(1)),
+            default=Value(2),
+            output_field=IntegerField(),
+        ),
+    ).order_by('orden_combustible', 'orden_empresa', 'orden_vehiculo')
 
     return render(request, 'combustible/lista_transporte.html', {'vehiculos': vehiculos})
 
@@ -90,6 +120,7 @@ def lista_solicitudes(request):
         solicitudes = solicitudes.filter(estado=estado)
 
     return render(request, 'combustible/lista_solicitudes.html', {'solicitudes': solicitudes})
+
 
 @login_required
 def crear_solicitud(request):
@@ -340,6 +371,7 @@ def editar_solicitud(request, pk):
         'vehiculos': vehiculos,
     })
 
+
 @login_required
 def aprobar_solicitud(request, pk):
     if request.user.departamento not in ['admin', 'directivo']:
@@ -351,6 +383,7 @@ def aprobar_solicitud(request, pk):
     solicitud.save()
     messages.success(request, f'Solicitud "{solicitud.nombre}" aprobada correctamente.')
     return redirect('lista_solicitudes')
+
 
 @login_required
 def rechazar_solicitud(request, pk):
@@ -364,6 +397,7 @@ def rechazar_solicitud(request, pk):
     solicitud.save()
     messages.success(request, f'Solicitud "{solicitud.nombre}" rechazada.')
     return redirect('lista_solicitudes')
+
 
 @login_required
 def eliminar_solicitud(request, pk):
