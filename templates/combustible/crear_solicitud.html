@@ -199,7 +199,6 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                         </div>
                     </div>
 
-                    <!-- Resumen por Empresa -->
                     <div class="resumen-empresas" id="resumen-empresas" style="display: none;">
                         <h6><i class="bi bi-building"></i> Resumen por Empresa</h6>
                         <table class="table table-sm mb-0">
@@ -236,11 +235,24 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
 
 <script>
 var filasEliminadas = {};
+var ordenOriginal = [];
 
 function quitarFila(id) {
     var fila = document.getElementById('fila-' + id);
     if (fila) {
-        filasEliminadas[id] = fila;
+        var tbody = document.querySelector('#tabla-vehiculos tbody');
+        var filasActuales = tbody.querySelectorAll('tr');
+        var posicion = -1;
+        for (var i = 0; i < filasActuales.length; i++) {
+            if (filasActuales[i].id === 'fila-' + id) {
+                posicion = i;
+                break;
+            }
+        }
+        filasEliminadas[id] = {
+            fila: fila,
+            posicion: posicion
+        };
         fila.remove();
         actualizarVehiculosQuitados();
         calcularTodo();
@@ -253,17 +265,50 @@ function actualizarVehiculosQuitados() {
 }
 
 function restablecerValores() {
-    for (var id in filasEliminadas) {
-        var fila = filasEliminadas[id];
-        var tbody = document.querySelector('#tabla-vehiculos tbody');
-        tbody.appendChild(fila);
+    var tbody = document.querySelector('#tabla-vehiculos tbody');
+
+    if (Object.keys(filasEliminadas).length === 0) {
+        var inputs = document.querySelectorAll('#tabla-vehiculos tbody input');
+        inputs.forEach(function(input) {
+            input.value = '';
+        });
+        calcularTodo();
+        return;
     }
+
+    var filasActuales = Array.from(tbody.querySelectorAll('tr'));
+    var todasLasFilas = {};
+
+    filasActuales.forEach(function(fila) {
+        var id = fila.id.replace('fila-', '');
+        todasLasFilas[id] = {
+            fila: fila,
+            eliminada: false
+        };
+    });
+
+    for (var id in filasEliminadas) {
+        todasLasFilas[id] = {
+            fila: filasEliminadas[id].fila,
+            eliminada: true
+        };
+    }
+
+    tbody.innerHTML = '';
+
+    ordenOriginal.forEach(function(id) {
+        if (todasLasFilas[id]) {
+            tbody.appendChild(todasLasFilas[id].fila);
+        }
+    });
+
     filasEliminadas = {};
     var inputs = document.querySelectorAll('#tabla-vehiculos tbody input');
     inputs.forEach(function(input) {
         input.value = '';
     });
     document.getElementById('vehiculos_quitados').value = '';
+
     calcularTodo();
 }
 
@@ -317,7 +362,7 @@ function calcularResumenEmpresas() {
 
     var empresasConsumo = Object.keys(consumo).sort();
     empresasConsumo.forEach(function(empresa) {
-        html += '<tr><td><strong>' + empresa + '</strong></td><td>' + consumo[empresa].toFixed(2) + '</td></tr>';
+        html += '<tr><td><strong>' + empresa + '</strong></td><td><strong>' + consumo[empresa].toFixed(2) + '</strong></td></tr>';
         subtotalConsumo += consumo[empresa];
     });
 
@@ -327,7 +372,7 @@ function calcularResumenEmpresas() {
 
     var empresasVenta = Object.keys(venta).sort();
     empresasVenta.forEach(function(empresa) {
-        html += '<tr><td><strong>' + empresa + '</strong></td><td>' + venta[empresa].toFixed(2) + '</td></tr>';
+        html += '<tr><td><strong>' + empresa + '</strong></td><td><strong>' + venta[empresa].toFixed(2) + '</strong></td></tr>';
         subtotalVenta += venta[empresa];
     });
 
@@ -345,13 +390,30 @@ function calcularResumenEmpresas() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    var filasIniciales = document.querySelectorAll('#tabla-vehiculos tbody tr');
+    filasIniciales.forEach(function(fila) {
+        ordenOriginal.push(fila.id.replace('fila-', ''));
+    });
+
     var quitados = document.getElementById('vehiculos_quitados').value;
     if (quitados) {
+        var tbody = document.querySelector('#tabla-vehiculos tbody');
         var ids = quitados.split(',');
+        var filasActuales = tbody.querySelectorAll('tr');
         ids.forEach(function(id) {
             var fila = document.getElementById('fila-' + id);
             if (fila) {
-                filasEliminadas[id] = fila;
+                var posicion = -1;
+                for (var i = 0; i < filasActuales.length; i++) {
+                    if (filasActuales[i].id === 'fila-' + id) {
+                        posicion = i;
+                        break;
+                    }
+                }
+                filasEliminadas[id] = {
+                    fila: fila,
+                    posicion: posicion
+                };
                 fila.remove();
             }
         });
