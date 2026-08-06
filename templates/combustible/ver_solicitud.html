@@ -43,6 +43,53 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
     margin-top: 2.5rem;
     padding-bottom: 2rem;
 }
+.resumen-empresas {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+.resumen-empresas h6 {
+    color: #6f42c1;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+.resumen-empresas table {
+    width: 100%;
+}
+.resumen-empresas thead th {
+    background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    text-align: center;
+}
+.resumen-empresas tbody td {
+    padding: 0.4rem 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #eee;
+}
+.resumen-empresas .fila-subtotal td {
+    font-weight: 700;
+    border-bottom: none;
+    padding-top: 0.6rem;
+}
+.resumen-empresas .fila-subtotal-consumo td {
+    color: #0d6efd;
+}
+.resumen-empresas .fila-subtotal-venta td {
+    color: #198754;
+}
+.resumen-empresas .fila-total td {
+    font-weight: 700;
+    color: #6f42c1;
+    font-size: 0.95rem;
+    border-top: 2px solid #6f42c1;
+    padding-top: 0.6rem;
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -130,6 +177,51 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                     <strong style="color: #6f42c1;">Total General:</strong> <span id="total-general">0.00</span>
                 </div>
             </div>
+        </div>
+
+        <!-- Resumen por Empresa -->
+        <div class="resumen-empresas">
+            <h6><i class="bi bi-building"></i> Resumen por Empresa</h6>
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Cant. de Combustible</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for empresa, cantidad in resumen_consumo.items %}
+                    <tr>
+                        <td><strong>{{ empresa }}</strong></td>
+                        <td><strong>{{ cantidad|floatformat:2 }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                    {% if resumen_consumo %}
+                    <tr class="fila-subtotal fila-subtotal-consumo">
+                        <td><strong>Subtotal de Consumo</strong></td>
+                        <td><strong>{{ subtotal_consumo|floatformat:2 }}</strong></td>
+                    </tr>
+                    {% endif %}
+                    {% for empresa, cantidad in resumen_venta.items %}
+                    <tr>
+                        <td><strong>{{ empresa }}</strong></td>
+                        <td><strong>{{ cantidad|floatformat:2 }}</strong></td>
+                    </tr>
+                    {% endfor %}
+                    {% if resumen_venta %}
+                    <tr class="fila-subtotal fila-subtotal-venta">
+                        <td><strong>Subtotal de Venta</strong></td>
+                        <td><strong>{{ subtotal_venta|floatformat:2 }}</strong></td>
+                    </tr>
+                    {% endif %}
+                    {% if resumen_consumo or resumen_venta %}
+                    <tr class="fila-total">
+                        <td><strong>Total General</strong></td>
+                        <td><strong>{{ total_general|floatformat:2 }}</strong></td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
         </div>
 
         {% if solicitud.estado == 'pendiente' and user.departamento == 'admin' or solicitud.estado == 'pendiente' and user.departamento == 'directivo' %}
@@ -222,7 +314,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('subtotal-ventas').textContent = subtotalVentas.toFixed(2);
     document.getElementById('total-general').textContent = (subtotalConsumo + subtotalVentas).toFixed(2);
 
-    // Configurar botón de rechazar con motivo
     var rechazarBtn = document.getElementById('confirmarRechazoBtn');
     var urlBase = "{% url 'rechazar_solicitud' solicitud.id %}";
     rechazarBtn.addEventListener('click', function(e) {

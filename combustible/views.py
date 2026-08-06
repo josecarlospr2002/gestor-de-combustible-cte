@@ -241,11 +241,37 @@ def enviar_solicitud(request, pk):
 def ver_solicitud(request, pk):
     solicitud = get_object_or_404(SolicitudCombustible, pk=pk)
     detalles = DetalleSolicitud.objects.filter(solicitud=solicitud).select_related('transporte')
+
+    # Calcular resumen por empresa
+    resumen_consumo = {}
+    resumen_venta = {}
+    subtotal_consumo = 0
+    subtotal_venta = 0
+
+    for detalle in detalles:
+        empresa = detalle.transporte.empresa
+        cantidad = detalle.cant_abastecer
+        if empresa.lower() in ['cte', 'ausa', 'ucm']:
+            resumen_consumo[empresa] = resumen_consumo.get(empresa, 0) + cantidad
+            subtotal_consumo += cantidad
+        else:
+            resumen_venta[empresa] = resumen_venta.get(empresa, 0) + cantidad
+            subtotal_venta += cantidad
+
+    # Ordenar alfabéticamente
+    resumen_consumo = dict(sorted(resumen_consumo.items()))
+    resumen_venta = dict(sorted(resumen_venta.items()))
+    total_general = subtotal_consumo + subtotal_venta
+
     return render(request, 'combustible/ver_solicitud.html', {
         'solicitud': solicitud,
-        'detalles': detalles
+        'detalles': detalles,
+        'resumen_consumo': resumen_consumo,
+        'resumen_venta': resumen_venta,
+        'subtotal_consumo': subtotal_consumo,
+        'subtotal_venta': subtotal_venta,
+        'total_general': total_general,
     })
-
 
 @login_required
 def editar_solicitud(request, pk):
@@ -358,7 +384,6 @@ def editar_solicitud(request, pk):
         messages.success(request, 'Solicitud actualizada correctamente.')
         return redirect('lista_solicitudes')
 
-    # GET: cargar datos guardados
     for v in vehiculos:
         detalle = detalles_dict.get(v.id)
         if detalle:
