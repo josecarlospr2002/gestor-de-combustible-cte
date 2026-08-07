@@ -152,7 +152,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                         </span>
                     </td>
                     <td onclick="event.stopPropagation();">
-                        {% if solicitud.estado == 'borrador' %}
+                        {% if solicitud.estado == 'borrador' or solicitud.estado == 'rechazada' %}
                             {% if user.departamento == 'admin' or user.departamento == 'transporte' %}
                             <a href="{% url 'editar_solicitud' solicitud.id %}" class="btn btn-sm text-white" style="background-color: #0370d0;" title="Modificar">
                                 <i class="bi bi-pencil"></i>

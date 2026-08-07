@@ -230,10 +230,12 @@ def crear_solicitud(request):
 @login_required
 def enviar_solicitud(request, pk):
     solicitud = get_object_or_404(SolicitudCombustible, pk=pk)
-    if solicitud.estado == 'borrador':
+    if solicitud.estado in ['borrador', 'rechazada']:
         solicitud.estado = 'pendiente'
         solicitud.save()
         messages.success(request, 'Solicitud enviada correctamente.')
+    else:
+        messages.error(request, 'Esta solicitud no se puede enviar.')
     return redirect('lista_solicitudes')
 
 
@@ -273,9 +275,14 @@ def ver_solicitud(request, pk):
         'total_general': total_general,
     })
 
+
 @login_required
 def editar_solicitud(request, pk):
-    solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='borrador')
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk)
+    if solicitud.estado not in ['borrador', 'rechazada']:
+        messages.error(request, 'Esta solicitud no se puede editar.')
+        return redirect('lista_solicitudes')
+
     vehiculos = get_vehiculos_ordenados()
     detalles = DetalleSolicitud.objects.filter(solicitud=solicitud)
 
@@ -363,6 +370,7 @@ def editar_solicitud(request, pk):
         solicitud.nombre = nombre
         solicitud.fecha_hora = fecha_hora
         solicitud.descripcion = descripcion
+        solicitud.estado = 'borrador'
         solicitud.save()
 
         detalles.delete()
@@ -428,7 +436,10 @@ def rechazar_solicitud(request, pk):
 
 @login_required
 def eliminar_solicitud(request, pk):
-    solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='borrador')
+    solicitud = get_object_or_404(SolicitudCombustible, pk=pk)
+    if solicitud.estado not in ['borrador', 'rechazada']:
+        messages.error(request, 'Esta solicitud no se puede eliminar.')
+        return redirect('lista_solicitudes')
     solicitud.delete()
     messages.success(request, 'Solicitud eliminada correctamente.')
     return redirect('lista_solicitudes')

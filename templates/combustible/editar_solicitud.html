@@ -107,6 +107,10 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
     border-top: 2px solid #6f42c1;
     padding-top: 0.6rem;
 }
+.alerta-rechazo {
+    border-radius: 0.5rem;
+    border-left: 4px solid #dc3545;
+}
 </style>
 
 <div class="row justify-content-center mt-3">
@@ -136,6 +140,12 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                             <input type="text" name="descripcion" class="form-control" value="{% if descripcion_temp is not None %}{{ descripcion_temp }}{% else %}{{ solicitud.descripcion|default:'' }}{% endif %}" placeholder="Opcional: descripción">
                         </div>
                     </div>
+
+                    {% if solicitud.estado == 'rechazada' and solicitud.motivo_rechazo %}
+                    <div class="alert alert-danger alerta-rechazo">
+                        <strong><i class="bi bi-exclamation-triangle-fill"></i> Motivo del rechazo:</strong> {{ solicitud.motivo_rechazo }}
+                    </div>
+                    {% endif %}
 
                     <div class="tabla-vehiculos">
                         <table class="table table-hover mb-0" id="tabla-vehiculos">

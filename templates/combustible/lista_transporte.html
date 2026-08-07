@@ -123,10 +123,10 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
-                    <th>Chapa</th>
-                    <th>Tipo de Vehículo</th>
                     <th>Tipo de Combustible</th>
                     <th>Empresa</th>
+                    <th>Tipo de Vehículo</th>
+                    <th>Chapa</th>
                     <th>I/C</th>
                     <th>Acciones</th>
                 </tr>
@@ -134,10 +134,10 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
             <tbody>
                 {% for vehiculo in vehiculos %}
                 <tr>
-                    <td><strong>{{ vehiculo.chapa }}</strong></td>
-                    <td>{{ vehiculo.tipo_vehiculo }}</td>
                     <td>{{ vehiculo.tipo_combustible }}</td>
                     <td>{{ vehiculo.empresa }}</td>
+                    <td>{{ vehiculo.tipo_vehiculo }}</td>
+                    <td><strong>{{ vehiculo.chapa }}</strong></td>
                     <td>{{ vehiculo.ic }}</td>
                     <td>
                         {% if user.departamento == 'admin' or user.departamento == 'transporte' %}
