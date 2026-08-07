@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.db.models import Case, When, Value, IntegerField
-from .models import Transporte, SolicitudCombustible, DetalleSolicitud
+from .models import Transporte, SolicitudCombustible, DetalleSolicitud, DespachoCombustible
 from .forms import TransporteForm
 
 
@@ -416,9 +416,35 @@ def aprobar_solicitud(request, pk):
     solicitud = get_object_or_404(SolicitudCombustible, pk=pk, estado='pendiente')
     solicitud.estado = 'aprobada'
     solicitud.save()
+
+    # Calcular totales
+    detalles = DetalleSolicitud.objects.filter(solicitud=solicitud)
+    subtotal_consumo = 0
+    subtotal_venta = 0
+
+    for detalle in detalles:
+        empresa = detalle.transporte.empresa
+        cantidad = detalle.cant_abastecer
+        if empresa.lower() in ['cte', 'ausa', 'ucm']:
+            subtotal_consumo += cantidad
+        else:
+            subtotal_venta += cantidad
+
+    total_general = subtotal_consumo + subtotal_venta
+
+    # Crear despacho
+    DespachoCombustible.objects.create(
+        solicitud=solicitud,
+        nombre=solicitud.nombre,
+        fecha_hora=solicitud.fecha_hora,
+        subtotal_consumo=subtotal_consumo,
+        subtotal_venta=subtotal_venta,
+        total_general=total_general,
+        estado='pendiente'
+    )
+
     messages.success(request, f'Solicitud "{solicitud.nombre}" aprobada correctamente.')
     return redirect('lista_solicitudes')
-
 
 @login_required
 def rechazar_solicitud(request, pk):

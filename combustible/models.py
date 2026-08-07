@@ -55,3 +55,26 @@ class DetalleSolicitud(models.Model):
 
     def __str__(self):
         return f"{self.transporte.chapa} - {self.solicitud}"
+
+class DespachoCombustible(models.Model):
+    ESTADOS_DESPACHO = [
+        ('pendiente', 'Pendiente de Extracción'),
+        ('extraido', 'Combustible Extraído'),
+        ('suministrado', 'Suministrado a Vehículos'),
+    ]
+
+    solicitud = models.OneToOneField(SolicitudCombustible, on_delete=models.CASCADE, related_name='despacho')
+    nombre = models.CharField(max_length=100, verbose_name='Nombre de la Solicitud')
+    fecha_hora = models.DateTimeField(verbose_name='Fecha y Hora')
+    subtotal_consumo = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Subtotal de Consumo')
+    subtotal_venta = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Subtotal de Venta')
+    total_general = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Total General')
+    estado = models.CharField(max_length=20, choices=ESTADOS_DESPACHO, default='pendiente', verbose_name='Estado del Despacho')
+
+    class Meta:
+        verbose_name = 'Despacho de Combustible'
+        verbose_name_plural = 'Despachos de Combustible'
+        ordering = ['-fecha_hora']
+
+    def __str__(self):
+        return f"Despacho: {self.nombre} - {self.fecha_hora.strftime('%d/%m/%Y')}"
