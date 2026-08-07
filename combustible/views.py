@@ -469,3 +469,25 @@ def eliminar_solicitud(request, pk):
     solicitud.delete()
     messages.success(request, 'Solicitud eliminada correctamente.')
     return redirect('lista_solicitudes')
+
+@login_required
+def lista_despachos(request):
+    if request.user.departamento not in ['admin', 'directivo', 'petroleo']:
+        messages.error(request, 'No tiene permisos para ver los despachos.')
+        return redirect('dashboard')
+
+    despachos = DespachoCombustible.objects.all()
+
+    # Filtros
+    nombre = request.GET.get('nombre', '')
+    fecha = request.GET.get('fecha', '')
+    estado = request.GET.get('estado', '')
+
+    if nombre:
+        despachos = despachos.filter(nombre__icontains=nombre)
+    if fecha:
+        despachos = despachos.filter(fecha_hora__date=fecha)
+    if estado:
+        despachos = despachos.filter(estado=estado)
+
+    return render(request, 'combustible/lista_despachos.html', {'despachos': despachos})

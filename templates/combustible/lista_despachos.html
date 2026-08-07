@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
+.table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+.table thead th {
+    background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 1rem;
+}
+.table tbody td {
+    padding: 0.9rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+.table tbody tr {
+    background-color: white;
+}
+.table tbody tr:hover {
+    background-color: #f0f0ff;
+}
+.titulo-tabla {
+    color: black;
+}
+.contador {
+    color: black;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+.filtros-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.06);
+    border-left: 4px solid #6f42c1;
+}
+.filtros-card label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #444;
+    margin-bottom: 0.3rem;
+}
+.filtros-card .form-control,
+.filtros-card .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid #ddd;
+    transition: all 0.2s;
+}
+.filtros-card .form-control:focus,
+.filtros-card .form-select:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.15);
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 titulo-tabla">
+        <i class="bi bi-droplet-fill"></i> Solicitudes Aprobadas - Dpto. de Petróleo
+    </h2>
+    <a href="{% url 'dashboard' %}" class="btn btn-danger fw-bold">
+        <i class="bi bi-arrow-left"></i> Volver al Inicio
+    </a>
+</div>
+
+<div class="filtros-card">
+    <div class="d-flex align-items-center mb-3">
+        <i class="bi bi-funnel-fill" style="color: #6f42c1; font-size: 1.2rem;"></i>
+        <span class="ms-2 fw-bold" style="color: #6f42c1;">Filtros de Búsqueda</span>
+        <small class="text-muted ms-2">(todos los campos son opcionales)</small>
+    </div>
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label for="nombre"><i class="bi bi-file-earmark-text"></i> Nombre</label>
+            <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej: Solicitud de..." value="{{ request.GET.nombre }}">
+        </div>
+        <div class="col-md-3">
+            <label for="fecha"><i class="bi bi-calendar"></i> Fecha</label>
+            <input type="date" name="fecha" id="fecha" class="form-control" value="{{ request.GET.fecha }}">
+        </div>
+        <div class="col-md-3">
+            <label for="estado"><i class="bi bi-flag"></i> Estado</label>
+            <select name="estado" id="estado" class="form-select">
+                <option value="">Todos</option>
+                <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente de Extracción</option>
+                <option value="extraido" {% if request.GET.estado == 'extraido' %}selected{% endif %}>Combustible Extraído</option>
+                <option value="suministrado" {% if request.GET.estado == 'suministrado' %}selected{% endif %}>Suministrado a Vehículos</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #0d6efd, #6f42c1);" title="Buscar">
+                    <i class="bi bi-search"></i>
+                </button>
+                <a href="{% url 'lista_despachos' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                    <i class="bi bi-eraser"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha / Hora</th>
+                    <th>Nombre</th>
+                    <th>Subtotal de Consumo</th>
+                    <th>Subtotal de Venta</th>
+                    <th>Total General</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for despacho in despachos %}
+                <tr>
+                    <td>{{ despacho.fecha_hora|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if despacho.nombre %}
+                            {{ despacho.nombre }}
+                        {% else %}
+                            <span class="text-muted">Sin nombre</span>
+                        {% endif %}
+                    </td>
+                    <td><strong class="text-primary">{{ despacho.subtotal_consumo|floatformat:2 }}</strong></td>
+                    <td><strong class="text-success">{{ despacho.subtotal_venta|floatformat:2 }}</strong></td>
+                    <td><strong style="color: #6f42c1;">{{ despacho.total_general|floatformat:2 }}</strong></td>
+                    <td>
+                        <span class="badge
+                            {% if despacho.estado == 'suministrado' %}bg-success
+                            {% elif despacho.estado == 'extraido' %}bg-info text-dark
+                            {% elif despacho.estado == 'pendiente' %}bg-warning text-dark
+                            {% endif %}">
+                            {{ despacho.get_estado_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-3 fs-5">No se encontraron despachos.</p>
+                        {% if request.GET.nombre or request.GET.fecha or request.GET.estado %}
+                        <a href="{% url 'lista_despachos' %}" class="btn btn-outline-primary btn-sm mt-2">
+                            <i class="bi bi-eraser"></i> Limpiar filtros
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 text-end contador">
+    <strong>Total de despachos: {{ despachos|length }}</strong>
+</div>
+{% endblock %}

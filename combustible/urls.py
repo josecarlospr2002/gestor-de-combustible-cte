@@ -15,4 +15,5 @@ urlpatterns = [
     path('solicitudes/eliminar/<int:pk>/', views.eliminar_solicitud, name='eliminar_solicitud'),
     path('solicitudes/aprobar/<int:pk>/', views.aprobar_solicitud, name='aprobar_solicitud'),
     path('solicitudes/rechazar/<int:pk>/', views.rechazar_solicitud, name='rechazar_solicitud'),
+    path('despachos/', views.lista_despachos, name='lista_despachos'),
 ]
