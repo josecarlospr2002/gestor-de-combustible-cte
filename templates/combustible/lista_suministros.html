@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
+.table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+.table thead th {
+    background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    color: white;
+    font-weight: 600;
+    border: none;
+    padding: 1rem;
+}
+.table tbody td {
+    padding: 0.9rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+.table tbody tr {
+    background-color: white;
+}
+.table tbody tr:hover {
+    background-color: #f0f0ff;
+}
+.titulo-tabla {
+    color: black;
+}
+.contador {
+    color: black;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+.filtros-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.06);
+    border-left: 4px solid #6f42c1;
+}
+.filtros-card label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #444;
+    margin-bottom: 0.3rem;
+}
+.filtros-card .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #ddd;
+    transition: all 0.2s;
+}
+.filtros-card .form-control:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.15);
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0 titulo-tabla">
+        <i class="bi bi-droplet-fill"></i> Suministros de Combustible
+    </h2>
+    <div>
+        {% if user.departamento == 'admin' or user.departamento == 'petroleo' %}
+        <a href="{% url 'crear_suministro' %}" class="btn btn-success fw-bold me-2">
+            <i class="bi bi-plus-circle"></i> Suministrar Combustible
+        </a>
+        {% endif %}
+        <a href="{% url 'dashboard' %}" class="btn btn-danger fw-bold">
+            <i class="bi bi-arrow-left"></i> Volver al Inicio
+        </a>
+    </div>
+</div>
+
+<div class="filtros-card">
+    <div class="d-flex align-items-center mb-3">
+        <i class="bi bi-funnel-fill" style="color: #6f42c1; font-size: 1.2rem;"></i>
+        <span class="ms-2 fw-bold" style="color: #6f42c1;">Filtros de Búsqueda</span>
+        <small class="text-muted ms-2">(todos los campos son opcionales)</small>
+    </div>
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label for="nombre"><i class="bi bi-file-earmark-text"></i> Nombre</label>
+            <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej: Suministro de..." value="{{ request.GET.nombre }}">
+        </div>
+        <div class="col-md-3">
+            <label for="fecha"><i class="bi bi-calendar"></i> Fecha</label>
+            <input type="date" name="fecha" id="fecha" class="form-control" value="{{ request.GET.fecha }}">
+        </div>
+        <div class="col-md-3">
+            <label for="tipo_combustible"><i class="bi bi-fuel-pump"></i> Tipo de Combustible</label>
+            <input type="text" name="tipo_combustible" id="tipo_combustible" class="form-control" placeholder="Ej: Diésel" value="{{ request.GET.tipo_combustible }}">
+        </div>
+        <div class="col-md-2">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #0d6efd, #6f42c1);" title="Buscar">
+                    <i class="bi bi-search"></i>
+                </button>
+                <a href="{% url 'lista_suministros' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                    <i class="bi bi-eraser"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Fecha / Hora</th>
+                    <th>Nombre</th>
+                    <th>Tipo de Combustible</th>
+                    <th>Cantidad</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for suministro in suministros %}
+                <tr>
+                    <td>{{ suministro.fecha_hora|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if suministro.nombre %}
+                            {{ suministro.nombre }}
+                        {% else %}
+                            <span class="text-muted">Sin nombre</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ suministro.tipo_combustible }}</td>
+                    <td><strong class="text-success">{{ suministro.cantidad|floatformat:2 }}</strong></td>
+                    <td>{{ suministro.descripcion|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        <p class="mt-3 fs-5">No se encontraron suministros.</p>
+                        {% if request.GET.nombre or request.GET.fecha or request.GET.tipo_combustible %}
+                        <a href="{% url 'lista_suministros' %}" class="btn btn-outline-primary btn-sm mt-2">
+                            <i class="bi bi-eraser"></i> Limpiar filtros
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-3 text-end contador">
+    <strong>Total de suministros: {{ suministros|length }}</strong>
+</div>
+{% endblock %}

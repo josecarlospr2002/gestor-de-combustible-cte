@@ -5,11 +5,11 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.db.models import Case, When, Value, IntegerField
 from decimal import Decimal, InvalidOperation
-from .models import Transporte, SolicitudCombustible, DetalleSolicitud, DespachoCombustible
-from .forms import TransporteForm
+from .models import Transporte, SolicitudCombustible, DetalleSolicitud, DespachoCombustible, SuministroCombustible
+from .forms import TransporteForm, SuministroCombustibleForm
+
 
 CANTIDAD_MAXIMA = Decimal('9999999999.99')
-
 
 def get_vehiculos_ordenados():
     """Retorna todos los vehículos con el orden personalizado."""
