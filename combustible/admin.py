@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import SolicitudCombustible, Transporte, DetalleSolicitud, DespachoCombustible
+from .models import SolicitudCombustible, Transporte, DetalleSolicitud, DespachoCombustible, SuministroCombustible
 
 
 @admin.register(SolicitudCombustible)
@@ -20,8 +20,16 @@ class TransporteAdmin(admin.ModelAdmin):
 class DetalleSolicitudAdmin(admin.ModelAdmin):
     list_display = ('solicitud', 'transporte', 'actividad', 'cant_abastecer')
 
+
 @admin.register(DespachoCombustible)
 class DespachoCombustibleAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'fecha_hora', 'subtotal_consumo', 'subtotal_venta', 'total_general', 'estado')
     list_filter = ('estado', 'fecha_hora')
     search_fields = ('nombre',)
+
+
+@admin.register(SuministroCombustible)
+class SuministroCombustibleAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'fecha_hora', 'tipo_combustible', 'cantidad')
+    list_filter = ('tipo_combustible', 'fecha_hora')
+    search_fields = ('nombre', 'descripcion')

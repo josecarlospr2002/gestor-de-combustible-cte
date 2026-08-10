@@ -47,7 +47,7 @@ class DetalleSolicitud(models.Model):
     solicitud = models.ForeignKey(SolicitudCombustible, on_delete=models.CASCADE, related_name='detalles')
     transporte = models.ForeignKey(Transporte, on_delete=models.CASCADE, verbose_name='Vehículo')
     actividad = models.CharField(max_length=50, verbose_name='Actividad')
-    cant_abastecer = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name='Cant. a Abastecer')
+    cant_abastecer = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name='Cant. a Abastecer')
 
     class Meta:
         verbose_name = 'Detalle de Solicitud'
@@ -78,3 +78,18 @@ class DespachoCombustible(models.Model):
 
     def __str__(self):
         return f"Despacho: {self.nombre} - {self.fecha_hora.strftime('%d/%m/%Y')}"
+
+class SuministroCombustible(models.Model):
+    nombre = models.CharField(max_length=100, blank=True, verbose_name='Nombre del Suministro')
+    fecha_hora = models.DateTimeField(verbose_name='Fecha y Hora')
+    tipo_combustible = models.CharField(max_length=50, verbose_name='Tipo de Combustible')
+    cantidad = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Cantidad de Combustible')
+    descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción / Nota')
+
+    class Meta:
+        verbose_name = 'Suministro de Combustible'
+        verbose_name_plural = 'Suministros de Combustible'
+        ordering = ['-fecha_hora']
+
+    def __str__(self):
+        return f"Suministro: {self.tipo_combustible} - {self.cantidad}L ({self.fecha_hora.strftime('%d/%m/%Y')})"

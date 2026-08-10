@@ -4,8 +4,11 @@ from django.contrib import messages
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.db.models import Case, When, Value, IntegerField
+from decimal import Decimal, InvalidOperation
 from .models import Transporte, SolicitudCombustible, DetalleSolicitud, DespachoCombustible
 from .forms import TransporteForm
+
+CANTIDAD_MAXIMA = Decimal('9999999999.99')
 
 
 def get_vehiculos_ordenados():
@@ -124,6 +127,19 @@ def lista_solicitudes(request):
     return render(request, 'combustible/lista_solicitudes.html', {'solicitudes': solicitudes})
 
 
+def _validar_cantidad(cant_str):
+    """Valida que la cantidad sea un decimal válido y no exceda el máximo."""
+    try:
+        cantidad = Decimal(cant_str)
+        if cantidad <= 0:
+            return None, 'La cantidad debe ser mayor que 0.'
+        if cantidad > CANTIDAD_MAXIMA:
+            return None, f'La cantidad no puede exceder {CANTIDAD_MAXIMA}.'
+        return cantidad, None
+    except InvalidOperation:
+        return None, 'Cantidad inválida.'
+
+
 @login_required
 def crear_solicitud(request):
     vehiculos = get_vehiculos_ordenados()
@@ -162,16 +178,26 @@ def crear_solicitud(request):
                     'vehiculos_quitados': vehiculos_quitados,
                 })
 
+        # Validar cantidades
+        error_cantidad = False
         tiene_datos = False
         for vehiculo in vehiculos:
             if str(vehiculo.id) in vehiculos_quitados.split(','):
                 continue
             actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
-            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '').strip()
+            cant_str = request.POST.get(f'cant_abastecer_{vehiculo.id}', '').strip()
 
-            if actividad and cant_abastecer and cant_abastecer != '0':
+            if actividad and cant_str and cant_str != '0':
+                cantidad, error = _validar_cantidad(cant_str)
+                if error:
+                    for v in vehiculos:
+                        v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                        v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+                    messages.error(request, f'Error en {vehiculo.chapa}: {error}')
+                    error_cantidad = True
+                    break
                 tiene_datos = True
-            elif (actividad and not cant_abastecer) or (not actividad and cant_abastecer and cant_abastecer != '0') or (actividad and cant_abastecer == '0'):
+            elif (actividad and not cant_str) or (not actividad and cant_str and cant_str != '0') or (actividad and cant_str == '0'):
                 for v in vehiculos:
                     v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
                     v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
@@ -183,6 +209,15 @@ def crear_solicitud(request):
                     'descripcion_temp': descripcion,
                     'vehiculos_quitados': vehiculos_quitados,
                 })
+
+        if error_cantidad:
+            return render(request, 'combustible/crear_solicitud.html', {
+                'vehiculos': vehiculos,
+                'nombre_temp': nombre,
+                'fecha_hora_temp': fecha_hora,
+                'descripcion_temp': descripcion,
+                'vehiculos_quitados': vehiculos_quitados,
+            })
 
         if not tiene_datos:
             for v in vehiculos:
@@ -211,15 +246,17 @@ def crear_solicitud(request):
             if str(vehiculo.id) in vehiculos_quitados.split(','):
                 continue
             actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
-            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '0').strip()
+            cant_str = request.POST.get(f'cant_abastecer_{vehiculo.id}', '0').strip()
 
-            if actividad and cant_abastecer and cant_abastecer != '0':
-                DetalleSolicitud.objects.create(
-                    solicitud=solicitud,
-                    transporte=vehiculo,
-                    actividad=actividad,
-                    cant_abastecer=float(cant_abastecer)
-                )
+            if actividad and cant_str and cant_str != '0':
+                cantidad, _ = _validar_cantidad(cant_str)
+                if cantidad:
+                    DetalleSolicitud.objects.create(
+                        solicitud=solicitud,
+                        transporte=vehiculo,
+                        actividad=actividad,
+                        cant_abastecer=cantidad
+                    )
 
         messages.success(request, 'Solicitud creada correctamente.')
         return redirect('lista_solicitudes')
@@ -330,16 +367,26 @@ def editar_solicitud(request, pk):
                     'vehiculos_quitados': vehiculos_quitados,
                 })
 
+        # Validar cantidades
+        error_cantidad = False
         tiene_datos = False
         for vehiculo in vehiculos:
             if str(vehiculo.id) in vehiculos_quitados.split(','):
                 continue
             actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
-            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '').strip()
+            cant_str = request.POST.get(f'cant_abastecer_{vehiculo.id}', '').strip()
 
-            if actividad and cant_abastecer and cant_abastecer != '0':
+            if actividad and cant_str and cant_str != '0':
+                cantidad, error = _validar_cantidad(cant_str)
+                if error:
+                    for v in vehiculos:
+                        v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
+                        v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
+                    messages.error(request, f'Error en {vehiculo.chapa}: {error}')
+                    error_cantidad = True
+                    break
                 tiene_datos = True
-            elif (actividad and not cant_abastecer) or (not actividad and cant_abastecer and cant_abastecer != '0') or (actividad and cant_abastecer == '0'):
+            elif (actividad and not cant_str) or (not actividad and cant_str and cant_str != '0') or (actividad and cant_str == '0'):
                 for v in vehiculos:
                     v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
                     v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
@@ -352,6 +399,16 @@ def editar_solicitud(request, pk):
                     'descripcion_temp': descripcion,
                     'vehiculos_quitados': vehiculos_quitados,
                 })
+
+        if error_cantidad:
+            return render(request, 'combustible/editar_solicitud.html', {
+                'solicitud': solicitud,
+                'vehiculos': vehiculos,
+                'nombre_temp': nombre,
+                'fecha_hora_temp': fecha_hora,
+                'descripcion_temp': descripcion,
+                'vehiculos_quitados': vehiculos_quitados,
+            })
 
         if not tiene_datos:
             for v in vehiculos:
@@ -379,15 +436,17 @@ def editar_solicitud(request, pk):
             if str(vehiculo.id) in vehiculos_quitados.split(','):
                 continue
             actividad = request.POST.get(f'actividad_{vehiculo.id}', '').strip()
-            cant_abastecer = request.POST.get(f'cant_abastecer_{vehiculo.id}', '0').strip()
+            cant_str = request.POST.get(f'cant_abastecer_{vehiculo.id}', '0').strip()
 
-            if actividad and cant_abastecer and cant_abastecer != '0':
-                DetalleSolicitud.objects.create(
-                    solicitud=solicitud,
-                    transporte=vehiculo,
-                    actividad=actividad,
-                    cant_abastecer=float(cant_abastecer)
-                )
+            if actividad and cant_str and cant_str != '0':
+                cantidad, _ = _validar_cantidad(cant_str)
+                if cantidad:
+                    DetalleSolicitud.objects.create(
+                        solicitud=solicitud,
+                        transporte=vehiculo,
+                        actividad=actividad,
+                        cant_abastecer=cantidad
+                    )
 
         messages.success(request, 'Solicitud actualizada correctamente.')
         return redirect('lista_solicitudes')
@@ -446,6 +505,7 @@ def aprobar_solicitud(request, pk):
     messages.success(request, f'Solicitud "{solicitud.nombre}" aprobada correctamente.')
     return redirect('lista_solicitudes')
 
+
 @login_required
 def rechazar_solicitud(request, pk):
     if request.user.departamento not in ['admin', 'directivo']:
@@ -470,6 +530,7 @@ def eliminar_solicitud(request, pk):
     messages.success(request, 'Solicitud eliminada correctamente.')
     return redirect('lista_solicitudes')
 
+
 @login_required
 def lista_despachos(request):
     if request.user.departamento not in ['admin', 'directivo', 'petroleo']:
@@ -491,3 +552,57 @@ def lista_despachos(request):
         despachos = despachos.filter(estado=estado)
 
     return render(request, 'combustible/lista_despachos.html', {'despachos': despachos})
+
+@login_required
+def crear_suministro(request):
+    if request.user.departamento not in ['admin', 'petroleo']:
+        messages.error(request, 'No tiene permisos para realizar esta acción.')
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = SuministroCombustibleForm(request.POST)
+        if form.is_valid():
+            suministro = form.save(commit=False)
+            # Validar cantidad
+            try:
+                cantidad = Decimal(str(suministro.cantidad))
+                if cantidad <= 0:
+                    messages.error(request, 'La cantidad debe ser mayor que 0.')
+                    return render(request, 'combustible/crear_suministro.html', {'form': form})
+                if cantidad > CANTIDAD_MAXIMA:
+                    messages.error(request, f'La cantidad no puede exceder {CANTIDAD_MAXIMA}.')
+                    return render(request, 'combustible/crear_suministro.html', {'form': form})
+            except InvalidOperation:
+                messages.error(request, 'Cantidad inválida.')
+                return render(request, 'combustible/crear_suministro.html', {'form': form})
+
+            suministro.save()
+            messages.success(request, 'Suministro registrado correctamente.')
+            return redirect('lista_suministros')
+    else:
+        form = SuministroCombustibleForm()
+
+    return render(request, 'combustible/crear_suministro.html', {'form': form})
+
+
+@login_required
+def lista_suministros(request):
+    if request.user.departamento not in ['admin', 'petroleo']:
+        messages.error(request, 'No tiene permisos para ver los suministros.')
+        return redirect('dashboard')
+
+    suministros = SuministroCombustible.objects.all()
+
+    # Filtros
+    nombre = request.GET.get('nombre', '')
+    fecha = request.GET.get('fecha', '')
+    tipo_combustible = request.GET.get('tipo_combustible', '')
+
+    if nombre:
+        suministros = suministros.filter(nombre__icontains=nombre)
+    if fecha:
+        suministros = suministros.filter(fecha_hora__date=fecha)
+    if tipo_combustible:
+        suministros = suministros.filter(tipo_combustible__icontains=tipo_combustible)
+
+    return render(request, 'combustible/lista_suministros.html', {'suministros': suministros})

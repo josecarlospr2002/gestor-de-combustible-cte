@@ -1,5 +1,5 @@
 from django import forms
-from .models import SolicitudCombustible, Transporte, DetalleSolicitud
+from .models import SolicitudCombustible, Transporte, DetalleSolicitud, SuministroCombustible
 
 
 class SolicitudCombustibleForm(forms.ModelForm):
@@ -87,4 +87,46 @@ class DetalleSolicitudForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0'
             }),
+        }
+
+
+class SuministroCombustibleForm(forms.ModelForm):
+    class Meta:
+        model = SuministroCombustible
+        fields = ['nombre', 'fecha_hora', 'tipo_combustible', 'cantidad', 'descripcion']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Opcional: nombre del suministro'
+            }),
+            'fecha_hora': forms.DateTimeInput(attrs={
+                'class': 'form-control',
+                'type': 'datetime-local'
+            }),
+            'tipo_combustible': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Gasolina, Diésel, Petróleo...'
+            }),
+            'cantidad': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0.00',
+                'step': '0.01',
+                'min': '0.01'
+            }),
+            'descripcion': forms.Textarea(attrs={
+                'class': 'form-control',
+                'placeholder': 'Opcional: nota, recuerdo u observación',
+                'rows': '3'
+            }),
+        }
+        labels = {
+            'nombre': 'Nombre del Suministro',
+            'fecha_hora': 'Fecha y Hora',
+            'tipo_combustible': 'Tipo de Combustible',
+            'cantidad': 'Cantidad de Combustible',
+            'descripcion': 'Descripción / Nota',
+        }
+        error_messages = {
+            'tipo_combustible': {'required': 'El tipo de combustible es obligatorio.'},
+            'cantidad': {'required': 'La cantidad es obligatoria.'},
         }
