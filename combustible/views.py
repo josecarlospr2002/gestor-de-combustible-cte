@@ -8,8 +8,8 @@ from decimal import Decimal, InvalidOperation
 from .models import Transporte, SolicitudCombustible, DetalleSolicitud, DespachoCombustible, SuministroCombustible
 from .forms import TransporteForm, SuministroCombustibleForm
 
-
 CANTIDAD_MAXIMA = Decimal('9999999999.99')
+
 
 def get_vehiculos_ordenados():
     """Retorna todos los vehículos con el orden personalizado."""
@@ -197,7 +197,8 @@ def crear_solicitud(request):
                     error_cantidad = True
                     break
                 tiene_datos = True
-            elif (actividad and not cant_str) or (not actividad and cant_str and cant_str != '0') or (actividad and cant_str == '0'):
+            elif (actividad and not cant_str) or (not actividad and cant_str and cant_str != '0') or (
+                    actividad and cant_str == '0'):
                 for v in vehiculos:
                     v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
                     v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
@@ -337,7 +338,8 @@ def editar_solicitud(request, pk):
             for v in vehiculos:
                 det = detalles_dict.get(v.id)
                 v.actividad_temp = request.POST.get(f'actividad_{v.id}', det.actividad if det else '')
-                v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', str(det.cant_abastecer) if det else '')
+                v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}',
+                                                         str(det.cant_abastecer) if det else '')
             messages.error(request, 'La fecha y hora son obligatorias.')
             return render(request, 'combustible/editar_solicitud.html', {
                 'solicitud': solicitud,
@@ -386,7 +388,8 @@ def editar_solicitud(request, pk):
                     error_cantidad = True
                     break
                 tiene_datos = True
-            elif (actividad and not cant_str) or (not actividad and cant_str and cant_str != '0') or (actividad and cant_str == '0'):
+            elif (actividad and not cant_str) or (not actividad and cant_str and cant_str != '0') or (
+                    actividad and cant_str == '0'):
                 for v in vehiculos:
                     v.actividad_temp = request.POST.get(f'actividad_{v.id}', '')
                     v.cant_abastecer_temp = request.POST.get(f'cant_abastecer_{v.id}', '')
@@ -553,6 +556,7 @@ def lista_despachos(request):
 
     return render(request, 'combustible/lista_despachos.html', {'despachos': despachos})
 
+
 @login_required
 def crear_suministro(request):
     if request.user.departamento not in ['admin', 'petroleo']:
@@ -560,29 +564,60 @@ def crear_suministro(request):
         return redirect('dashboard')
 
     if request.method == 'POST':
-        form = SuministroCombustibleForm(request.POST)
-        if form.is_valid():
-            suministro = form.save(commit=False)
-            # Validar cantidad
-            try:
-                cantidad = Decimal(str(suministro.cantidad))
-                if cantidad <= 0:
-                    messages.error(request, 'La cantidad debe ser mayor que 0.')
-                    return render(request, 'combustible/crear_suministro.html', {'form': form})
-                if cantidad > CANTIDAD_MAXIMA:
-                    messages.error(request, f'La cantidad no puede exceder {CANTIDAD_MAXIMA}.')
-                    return render(request, 'combustible/crear_suministro.html', {'form': form})
-            except InvalidOperation:
-                messages.error(request, 'Cantidad inválida.')
-                return render(request, 'combustible/crear_suministro.html', {'form': form})
+        nombre = request.POST.get('nombre', '')
+        fecha_hora = request.POST.get('fecha_hora', '')
+        tipo_combustible = request.POST.get('tipo_combustible', '')
+        cantidad_str = request.POST.get('cantidad', '')
+        descripcion = request.POST.get('descripcion', '')
 
-            suministro.save()
-            messages.success(request, 'Suministro registrado correctamente.')
-            return redirect('lista_suministros')
-    else:
-        form = SuministroCombustibleForm()
+        if not fecha_hora:
+            messages.error(request, 'La fecha y hora son obligatorias.')
+            return render(request, 'combustible/crear_suministro.html', {
+                'form': SuministroCombustibleForm(request.POST)
+            })
 
-    return render(request, 'combustible/crear_suministro.html', {'form': form})
+        if not tipo_combustible:
+            messages.error(request, 'El tipo de combustible es obligatorio.')
+            return render(request, 'combustible/crear_suministro.html', {
+                'form': SuministroCombustibleForm(request.POST)
+            })
+
+        # Validar que la fecha no sea futura
+        fecha_parseada = parse_datetime(fecha_hora)
+        if fecha_parseada:
+            if timezone.is_naive(fecha_parseada):
+                fecha_parseada = timezone.make_aware(fecha_parseada)
+            if fecha_parseada > timezone.now():
+                messages.error(request, 'No se puede registrar un suministro con fecha futura.')
+                return render(request, 'combustible/crear_suministro.html', {
+                    'form': SuministroCombustibleForm(request.POST)
+                })
+
+        # Validar cantidad
+        cantidad, error = _validar_cantidad(cantidad_str)
+        if error:
+            messages.error(request, error)
+            return render(request, 'combustible/crear_suministro.html', {
+                'form': SuministroCombustibleForm(request.POST)
+            })
+
+        if not nombre:
+            nombre = f"Suministro de Combustible del día {fecha_hora}"
+
+        SuministroCombustible.objects.create(
+            nombre=nombre,
+            fecha_hora=fecha_hora,
+            tipo_combustible=tipo_combustible,
+            cantidad=cantidad,
+            descripcion=descripcion
+        )
+
+        messages.success(request, 'Suministro registrado correctamente.')
+        return redirect('lista_suministros')
+
+    return render(request, 'combustible/crear_suministro.html', {
+        'form': SuministroCombustibleForm()
+    })
 
 
 @login_required
@@ -606,3 +641,69 @@ def lista_suministros(request):
         suministros = suministros.filter(tipo_combustible__icontains=tipo_combustible)
 
     return render(request, 'combustible/lista_suministros.html', {'suministros': suministros})
+
+
+@login_required
+def editar_suministro(request, pk):
+    if request.user.departamento not in ['admin', 'petroleo']:
+        messages.error(request, 'No tiene permisos para realizar esta acción.')
+        return redirect('dashboard')
+
+    suministro = get_object_or_404(SuministroCombustible, pk=pk)
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '')
+        fecha_hora = request.POST.get('fecha_hora', '')
+        tipo_combustible = request.POST.get('tipo_combustible', '')
+        cantidad_str = request.POST.get('cantidad', '')
+        descripcion = request.POST.get('descripcion', '')
+
+        if not fecha_hora:
+            messages.error(request, 'La fecha y hora son obligatorias.')
+            return render(request, 'combustible/editar_suministro.html', {'suministro': suministro})
+
+        if not tipo_combustible:
+            messages.error(request, 'El tipo de combustible es obligatorio.')
+            return render(request, 'combustible/editar_suministro.html', {'suministro': suministro})
+
+        # Validar que la fecha no sea futura
+        fecha_parseada = parse_datetime(fecha_hora)
+        if fecha_parseada:
+            if timezone.is_naive(fecha_parseada):
+                fecha_parseada = timezone.make_aware(fecha_parseada)
+            if fecha_parseada > timezone.now():
+                messages.error(request, 'No se puede registrar un suministro con fecha futura.')
+                return render(request, 'combustible/editar_suministro.html', {'suministro': suministro})
+
+        # Validar cantidad
+        cantidad, error = _validar_cantidad(cantidad_str)
+        if error:
+            messages.error(request, error)
+            return render(request, 'combustible/editar_suministro.html', {'suministro': suministro})
+
+        if not nombre:
+            nombre = f"Suministro de Combustible del día {fecha_hora}"
+
+        suministro.nombre = nombre
+        suministro.fecha_hora = fecha_hora
+        suministro.tipo_combustible = tipo_combustible
+        suministro.cantidad = cantidad
+        suministro.descripcion = descripcion
+        suministro.save()
+
+        messages.success(request, 'Suministro modificado correctamente.')
+        return redirect('lista_suministros')
+
+    return render(request, 'combustible/editar_suministro.html', {'suministro': suministro})
+
+
+@login_required
+def eliminar_suministro(request, pk):
+    if request.user.departamento not in ['admin', 'petroleo']:
+        messages.error(request, 'No tiene permisos para realizar esta acción.')
+        return redirect('dashboard')
+
+    suministro = get_object_or_404(SuministroCombustible, pk=pk)
+    suministro.delete()
+    messages.success(request, 'Suministro eliminado correctamente.')
+    return redirect('lista_suministros')

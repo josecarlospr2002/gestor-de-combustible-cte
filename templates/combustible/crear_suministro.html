@@ -18,11 +18,11 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="id_nombre" class="form-label fw-bold text-secondary">{{ form.nombre.label }}</label>
-                        {{ form.nombre }}
+                        <input type="text" name="nombre" id="id_nombre" class="form-control" value="{{ form.nombre.value|default:'' }}" placeholder="Opcional: nombre del suministro">
                     </div>
                     <div class="mb-3">
                         <label for="id_fecha_hora" class="form-label fw-bold text-secondary">{{ form.fecha_hora.label }} *</label>
-                        {{ form.fecha_hora }}
+                        <input type="datetime-local" name="fecha_hora" id="id_fecha_hora" class="form-control" value="{{ form.fecha_hora.value|date:'Y-m-d\TH:i'|default:'' }}" required>
                     </div>
                     <div class="mb-3">
                         <label for="id_tipo_combustible" class="form-label fw-bold text-secondary">{{ form.tipo_combustible.label }} *</label>
@@ -30,7 +30,7 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
                     </div>
                     <div class="mb-3">
                         <label for="id_cantidad" class="form-label fw-bold text-secondary">{{ form.cantidad.label }} *</label>
-                        {{ form.cantidad }}
+                        <input type="number" name="cantidad" id="id_cantidad" class="form-control" placeholder="0.00" step="0.01" min="0.01" value="{{ form.cantidad.value|default:'' }}">
                     </div>
                     <div class="mb-4">
                         <label for="id_descripcion" class="form-label fw-bold text-secondary">{{ form.descripcion.label }}</label>
@@ -49,4 +49,19 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var fechaHora = document.getElementById('id_fecha_hora');
+    if (!fechaHora.value) {
+        var now = new Date();
+        var fecha = now.getFullYear() + '-' +
+            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+            String(now.getDate()).padStart(2, '0') + 'T' +
+            String(now.getHours()).padStart(2, '0') + ':' +
+            String(now.getMinutes()).padStart(2, '0');
+        fechaHora.value = fecha;
+    }
+});
+</script>
 {% endblock %}
