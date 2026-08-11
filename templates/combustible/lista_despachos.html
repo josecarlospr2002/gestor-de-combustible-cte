@@ -77,33 +77,22 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
         <span class="ms-2 fw-bold" style="color: #6f42c1;">Filtros de Búsqueda</span>
         <small class="text-muted ms-2">(todos los campos son opcionales)</small>
     </div>
-    <form method="get" class="row g-3 align-items-end">
-        <div class="col-md-4">
+    <form method="get" class="row g-3 justify-content-center align-items-end">
+        <div class="col-md-4 pe-md-5">
             <label for="nombre"><i class="bi bi-file-earmark-text"></i> Nombre</label>
             <input type="text" name="nombre" id="nombre" class="form-control" placeholder="Ej: Solicitud de..." value="{{ request.GET.nombre }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 ps-md-5">
             <label for="fecha"><i class="bi bi-calendar"></i> Fecha</label>
             <input type="date" name="fecha" id="fecha" class="form-control" value="{{ request.GET.fecha }}">
         </div>
-        <div class="col-md-3">
-            <label for="estado"><i class="bi bi-flag"></i> Estado</label>
-            <select name="estado" id="estado" class="form-select">
-                <option value="">Todos</option>
-                <option value="pendiente" {% if request.GET.estado == 'pendiente' %}selected{% endif %}>Pendiente de Extracción</option>
-                <option value="extraido" {% if request.GET.estado == 'extraido' %}selected{% endif %}>Combustible Extraído</option>
-                <option value="suministrado" {% if request.GET.estado == 'suministrado' %}selected{% endif %}>Suministrado a Vehículos</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #0d6efd, #6f42c1);" title="Buscar">
-                    <i class="bi bi-search"></i>
-                </button>
-                <a href="{% url 'lista_despachos' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
-                    <i class="bi bi-eraser"></i>
-                </a>
-            </div>
+        <div class="col-md-auto d-flex align-items-end gap-2 ms-3">
+            <button type="submit" class="btn text-white" style="background: linear-gradient(135deg, #0d6efd, #6f42c1);" title="Buscar">
+                <i class="bi bi-search"></i>
+            </button>
+            <a href="{% url 'lista_despachos' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                <i class="bi bi-eraser"></i>
+            </a>
         </div>
     </form>
 </div>

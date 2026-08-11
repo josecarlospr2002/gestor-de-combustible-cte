@@ -707,3 +707,24 @@ def eliminar_suministro(request, pk):
     suministro.delete()
     messages.success(request, 'Suministro eliminado correctamente.')
     return redirect('lista_suministros')
+
+@login_required
+def ver_suministro(request, pk):
+    if request.user.departamento not in ['admin', 'petroleo']:
+        messages.error(request, 'No tiene permisos para ver este suministro.')
+        return redirect('dashboard')
+
+    suministro = get_object_or_404(SuministroCombustible, pk=pk)
+    return render(request, 'combustible/ver_suministro.html', {'suministro': suministro})
+
+@login_required
+def validar_suministro(request, pk):
+    if request.user.departamento not in ['admin', 'petroleo']:
+        messages.error(request, 'No tiene permisos para realizar esta acción.')
+        return redirect('dashboard')
+
+    suministro = get_object_or_404(SuministroCombustible, pk=pk, estado='pendiente')
+    suministro.estado = 'validado'
+    suministro.save()
+    messages.success(request, f'Suministro "{suministro.nombre}" validado correctamente.')
+    return redirect('lista_suministros')

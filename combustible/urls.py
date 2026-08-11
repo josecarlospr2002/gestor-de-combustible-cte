@@ -20,4 +20,6 @@ urlpatterns = [
     path('suministros/crear/', views.crear_suministro, name='crear_suministro'),
     path('suministros/editar/<int:pk>/', views.editar_suministro, name='editar_suministro'),
     path('suministros/eliminar/<int:pk>/', views.eliminar_suministro, name='eliminar_suministro'),
+    path('suministros/ver/<int:pk>/', views.ver_suministro, name='ver_suministro'),
+    path('suministros/validar/<int:pk>/', views.validar_suministro, name='validar_suministro'),
 ]

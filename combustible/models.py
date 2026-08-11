@@ -84,16 +84,14 @@ class DespachoCombustible(models.Model):
 
 
 class SuministroCombustible(models.Model):
+    ESTADOS_SUMINISTRO = [
+        ('pendiente', 'Pendiente de Validar'),
+        ('validado', 'Validado'),
+    ]
+
     nombre = models.CharField(max_length=100, blank=True, verbose_name='Nombre del Suministro')
     fecha_hora = models.DateTimeField(verbose_name='Fecha y Hora')
     tipo_combustible = models.CharField(max_length=50, verbose_name='Tipo de Combustible')
     cantidad = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Cantidad de Combustible')
+    estado = models.CharField(max_length=20, choices=ESTADOS_SUMINISTRO, default='pendiente', verbose_name='Estado')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción / Nota')
-
-    class Meta:
-        verbose_name = 'Suministro de Combustible'
-        verbose_name_plural = 'Suministros de Combustible'
-        ordering = ['-fecha_hora']
-
-    def __str__(self):
-        return f"Suministro: {self.tipo_combustible} - {self.cantidad}L ({self.fecha_hora.strftime('%d/%m/%Y')})"

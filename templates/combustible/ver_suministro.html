@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
+.card-suministro {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+.card-header-custom {
+    background: linear-gradient(135deg, #0d6efd, #6f42c1);
+    padding: 1.2rem 1.5rem;
+}
+.info-row {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.info-row p {
+    margin-bottom: 0.5rem;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0" style="color: black;">
+        <i class="bi bi-eye"></i> Ver Suministro
+    </h2>
+    <a href="{% url 'lista_suministros' %}" class="btn btn-danger fw-bold">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="card-suministro">
+    <div class="card-header-custom text-white">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <h5 class="mb-0 ms-2">
+                {% if suministro.nombre %}
+                    {{ suministro.nombre }}
+                {% else %}
+                    Suministro sin nombre
+                {% endif %}
+            </h5>
+            <span>{{ suministro.fecha_hora|date:"d/m/Y H:i" }}</span>
+        </div>
+    </div>
+    <div class="card-body bg-light">
+        <div class="info-row">
+            <p><strong>Tipo de Combustible:</strong> {{ suministro.tipo_combustible }}</p>
+            <p><strong>Cantidad:</strong> <span class="text-success fw-bold">{{ suministro.cantidad|floatformat:2 }} L</span></p>
+        </div>
+
+        <div class="info-row">
+            <p><strong>Descripción / Nota:</strong></p>
+            {% if suministro.descripcion %}
+                <p>{{ suministro.descripcion }}</p>
+            {% else %}
+                <p class="text-muted fst-italic">Sin descripción</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
