@@ -25,4 +25,5 @@ urlpatterns = [
     path('almacen/', views.lista_almacen, name='lista_almacen'),
     path('almacen/ver/<int:pk>/', views.ver_almacen, name='ver_almacen'),
     path('almacen/confirmar/<int:pk>/', views.confirmar_recepcion, name='confirmar_recepcion'),
+    path('despachos/confirmar/<int:pk>/', views.confirmar_extraccion, name='confirmar_extraccion'),
 ]

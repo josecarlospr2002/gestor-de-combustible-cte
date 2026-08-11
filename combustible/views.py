@@ -819,3 +819,22 @@ def confirmar_recepcion(request, pk):
 
     messages.success(request, f'Recepción "{recepcion.despacho.nombre}" confirmada en almacén.')
     return redirect('lista_almacen')
+
+
+@login_required
+def confirmar_extraccion(request, pk):
+    if request.user.departamento not in ['admin', 'petroleo']:
+        messages.error(request, 'No tiene permisos para realizar esta acción.')
+        return redirect('dashboard')
+
+    despacho = get_object_or_404(DespachoCombustible, pk=pk, estado='pendiente')
+    despacho.estado = 'extraido'
+    despacho.save()
+
+    # Crear la recepción para almacén
+    RecepcionAlmacen.objects.create(
+        despacho=despacho
+    )
+
+    messages.success(request, f'Combustible extraído. Recepción enviada a almacén.')
+    return redirect('lista_despachos')
