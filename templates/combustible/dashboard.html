@@ -8,18 +8,17 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
 <h1 class="mb-2">Inventario de Combustible</h1>
 <p class="text-muted mb-4">Esta pantalla es visible para todos los roles.</p>
 
-<div class="row mt-2">
-    <div class="col-md-4">
-        <div class="card border-primary mb-3">
-            <div class="card-header bg-primary text-white">
-                <i class="bi bi-droplet-fill"></i> Combustible Existente
-            </div>
-            <div class="card-body text-center">
-                <h3 class="card-title text-primary">0 L</h3>
-                <p class="card-text text-muted">Litros registrados</p>
-            </div>
+<div class="col-md-4">
+    <div class="card border-primary mb-3">
+        <div class="card-header bg-primary text-white">
+            <i class="bi bi-droplet-fill"></i> Combustible Existente
+        </div>
+        <div class="card-body text-center">
+            <h3 class="card-title text-primary">{{ total_combustible|floatformat:2 }} L</h3>
+            <p class="card-text text-muted">Litros registrados</p>
         </div>
     </div>
+</div>
     <div class="col-md-4">
         <div class="card border-success mb-3">
             <div class="card-header bg-success text-white">

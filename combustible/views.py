@@ -44,8 +44,18 @@ def get_vehiculos_ordenados():
 
 @login_required
 def dashboard(request):
-    return render(request, 'combustible/dashboard.html')
+    from .models import SuministroCombustible
+    from django.db.models import Sum
 
+    total_combustible = SuministroCombustible.objects.filter(
+        estado='validado'
+    ).aggregate(
+        total=Sum('cantidad')
+    )['total'] or 0
+
+    return render(request, 'combustible/dashboard.html', {
+        'total_combustible': total_combustible,
+    })
 
 @login_required
 def lista_transporte(request):

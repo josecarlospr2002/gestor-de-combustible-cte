@@ -15,11 +15,15 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
 .info-row {
     background: white;
     border-radius: 0.5rem;
-    padding: 1rem;
-    margin-bottom: 1rem;
+    padding: 1.5rem;
 }
 .info-row p {
     margin-bottom: 0.5rem;
+}
+.separador {
+    border-top: 1px solid #dee2e6;
+    margin: 1rem 0;
+    padding-top: 1rem;
 }
 </style>
 
@@ -35,29 +39,38 @@ body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
 <div class="card-suministro">
     <div class="card-header-custom text-white">
         <div class="d-flex justify-content-between align-items-center flex-wrap">
-            <h5 class="mb-0 ms-2">
+            <h5 class="mb-0">
                 {% if suministro.nombre %}
                     {{ suministro.nombre }}
                 {% else %}
                     Suministro sin nombre
                 {% endif %}
             </h5>
-            <span>{{ suministro.fecha_hora|date:"d/m/Y H:i" }}</span>
+            <div class="d-flex align-items-center gap-4">
+                <span>{{ suministro.fecha_hora|date:"d/m/Y H:i" }}</span>
+                <span class="fw-bold">{{ suministro.get_estado_display }}</span>
+            </div>
         </div>
     </div>
-    <div class="card-body bg-light">
+    <div class="card-body bg-light p-4">
         <div class="info-row">
-            <p><strong>Tipo de Combustible:</strong> {{ suministro.tipo_combustible }}</p>
-            <p><strong>Cantidad:</strong> <span class="text-success fw-bold">{{ suministro.cantidad|floatformat:2 }} L</span></p>
-        </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Tipo de Combustible:</strong> {{ suministro.tipo_combustible }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Cantidad:</strong> <span class="text-success fw-bold">{{ suministro.cantidad|floatformat:2 }} L</span></p>
+                </div>
+            </div>
 
-        <div class="info-row">
-            <p><strong>Descripción / Nota:</strong></p>
-            {% if suministro.descripcion %}
-                <p>{{ suministro.descripcion }}</p>
-            {% else %}
-                <p class="text-muted fst-italic">Sin descripción</p>
-            {% endif %}
+            <div class="separador">
+                <p><strong>Descripción / Nota:</strong></p>
+                {% if suministro.descripcion %}
+                    <p>{{ suministro.descripcion }}</p>
+                {% else %}
+                    <p class="text-muted fst-italic">Sin descripción</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
