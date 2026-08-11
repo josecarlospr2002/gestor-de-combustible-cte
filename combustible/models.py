@@ -95,3 +95,20 @@ class SuministroCombustible(models.Model):
     cantidad = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Cantidad de Combustible')
     estado = models.CharField(max_length=20, choices=ESTADOS_SUMINISTRO, default='pendiente', verbose_name='Estado')
     descripcion = models.TextField(blank=True, null=True, verbose_name='Descripción / Nota')
+
+
+class RecepcionAlmacen(models.Model):
+    ESTADOS_ALMACEN = [
+        ('pendiente', 'Pendiente de Recepción'),
+        ('recibido', 'Recibido en Almacén'),
+    ]
+
+    despacho = models.OneToOneField(DespachoCombustible, on_delete=models.CASCADE, related_name='recepcion_almacen')
+    estado = models.CharField(max_length=20, choices=ESTADOS_ALMACEN, default='pendiente', verbose_name='Estado')
+
+    class Meta:
+        verbose_name = 'Recepción de Almacén'
+        verbose_name_plural = 'Recepciones de Almacén'
+
+    def __str__(self):
+        return f"Almacén: {self.despacho.nombre}"

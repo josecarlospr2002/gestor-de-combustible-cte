@@ -3,100 +3,119 @@
 {% block content %}
 <style>
 body { background: linear-gradient(135deg, #bcc7ff, #ddbeff); }
+.card-dashboard {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0.3rem 0.8rem rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s;
+}
+.card-dashboard:hover {
+    transform: translateY(-3px);
+}
+.card-dashboard .card-header {
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.8rem 1rem;
+    border: none;
+}
+.card-dashboard .card-body {
+    padding: 1.5rem 1rem;
+}
+.card-dashboard .card-title {
+    font-size: 2rem;
+    font-weight: 700;
+}
+.btn-acceso {
+    border-radius: 0.75rem;
+    font-weight: 600;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    transition: transform 0.2s;
+}
+.btn-acceso:hover {
+    transform: translateY(-2px);
+}
+.titulo-dashboard {
+    color: #333;
+    font-weight: 700;
+}
 </style>
 
-<h1 class="mb-2">Inventario de Combustible</h1>
-<p class="text-muted mb-4">Esta pantalla es visible para todos los roles.</p>
+<div class="text-center mb-4">
+    <h1 class="titulo-dashboard">
+        <i class="bi bi-speedometer2"></i> Inventario de Combustible
+    </h1>
+    <p class="text-muted">Resumen general del depósito</p>
+</div>
 
-<div class="col-md-4">
-    <div class="card border-primary mb-3">
-        <div class="card-header bg-primary text-white">
-            <i class="bi bi-droplet-fill"></i> Combustible Existente
-        </div>
-        <div class="card-body text-center">
-            <h3 class="card-title text-primary">{{ total_combustible|floatformat:2 }} L</h3>
-            <p class="card-text text-muted">Litros registrados</p>
+<div class="row g-4 justify-content-center mb-4">
+    <div class="col-md-4">
+        <div class="card card-dashboard border-primary">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-droplet-fill"></i> Combustible Existente
+            </div>
+            <div class="card-body text-center">
+                <h3 class="card-title text-primary">{{ total_combustible|floatformat:2 }} L</h3>
+                <p class="card-text text-muted mb-0">Litros registrados</p>
+            </div>
         </div>
     </div>
-</div>
     <div class="col-md-4">
-        <div class="card border-success mb-3">
+        <div class="card card-dashboard border-success">
             <div class="card-header bg-success text-white">
                 <i class="bi bi-arrow-up-circle-fill"></i> Combustible a Extraer
             </div>
             <div class="card-body text-center">
                 <h3 class="card-title text-success">0 L</h3>
-                <p class="card-text text-muted">Litros a extraer</p>
+                <p class="card-text text-muted mb-0">Litros a extraer</p>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card mb-3" style="border-color: #6f42c1 !important;">
+        <div class="card card-dashboard" style="border-color: #6f42c1 !important;">
             <div class="card-header text-white" style="background-color: #7c5cbf !important;">
                 <i class="bi bi-box-seam-fill"></i> Combustible no Despachado
             </div>
             <div class="card-body text-center">
                 <h3 class="card-title" style="color: #6f42c1 !important;">0 L</h3>
-                <p class="card-text text-muted">Litros sin despachar</p>
+                <p class="card-text text-muted mb-0">Litros sin despachar</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-2">
-    <div class="col-md-4">
-        <div class="card border-info mb-3">
-            <div class="card-header bg-info text-white">
-                <i class="bi bi-cash-stack"></i> Saldo Total
-            </div>
-            <div class="card-body text-center">
-                <h3 class="card-title text-info">0 L</h3>
-                <p class="card-text text-muted">Saldo total disponible</p>
-            </div>
-        </div>
+<div class="row g-3 justify-content-center">
+    {% if user.departamento == 'admin' or user.departamento == 'directivo' or user.departamento == 'transporte' %}
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'lista_transporte' %}" class="btn btn-acceso text-white w-100" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
+            <i class="bi bi-truck"></i> Tabla de Transportes
+        </a>
     </div>
-    <div class="col-md-4">
-        <div class="card border-warning mb-3">
-            <div class="card-header bg-warning text-dark">
-                <i class="bi bi-arrow-down-circle-fill"></i> Saldo a Extraer
-            </div>
-            <div class="card-body text-center">
-                <h3 class="card-title text-warning">0 L</h3>
-                <p class="card-text text-muted">Saldo pendiente de extracción</p>
-            </div>
-        </div>
+    {% endif %}
+
+    {% if user.departamento == 'admin' or user.departamento == 'transporte' or user.departamento == 'directivo' %}
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'lista_solicitudes' %}" class="btn btn-acceso text-white w-100" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
+            <i class="bi bi-file-earmark-text"></i> Solicitudes de Combustible
+        </a>
     </div>
-</div>
+    {% endif %}
 
-{% if user.departamento == 'admin' or user.departamento == 'directivo' or user.departamento == 'transporte' %}
-<div class="mt-3">
-    <a href="{% url 'lista_transporte' %}" class="btn text-white fw-bold py-3 px-5 fs-5" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
-        <i class="bi bi-truck"></i> Tabla de Transportes
-    </a>
-</div>
-{% endif %}
+    {% if user.departamento == 'admin' or user.departamento == 'directivo' or user.departamento == 'petroleo' %}
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'lista_despachos' %}" class="btn btn-acceso text-white w-100" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
+            <i class="bi bi-droplet-fill"></i> Departamento Petróleo
+        </a>
+    </div>
+    {% endif %}
 
-{% if user.departamento == 'admin' or user.departamento == 'transporte' or user.departamento == 'directivo' %}
-<div class="mt-3">
-    <a href="{% url 'lista_solicitudes' %}" class="btn text-white fw-bold py-3 px-5 fs-5" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
-        <i class="bi bi-file-earmark-text"></i> Solicitudes de Combustible
-    </a>
+    {% if user.departamento == 'admin' or user.departamento == 'petroleo' %}
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'lista_suministros' %}" class="btn btn-acceso text-white w-100" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
+            <i class="bi bi-fuel-pump"></i> Suministrar Combustible
+        </a>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
-
-{% if user.departamento == 'admin' or user.departamento == 'directivo' or user.departamento == 'petroleo' %}
-<div class="mt-3">
-    <a href="{% url 'lista_despachos' %}" class="btn text-white fw-bold py-3 px-5 fs-5" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
-        <i class="bi bi-droplet-fill"></i> Departamento Petróleo
-    </a>
-</div>
-{% endif %}
-
-{% if user.departamento == 'admin' or user.departamento == 'petroleo' %}
-<div class="mt-3">
-    <a href="{% url 'lista_suministros' %}" class="btn text-white fw-bold py-3 px-5 fs-5" style="background: linear-gradient(135deg, #0d6efd, #6f42c1); border: none;">
-        <i class="bi bi-fuel-pump"></i> Suministrar Combustible
-    </a>
-</div>
-{% endif %}
 {% endblock %}

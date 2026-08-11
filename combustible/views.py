@@ -5,7 +5,8 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.db.models import Case, When, Value, IntegerField
 from decimal import Decimal, InvalidOperation
-from .models import Transporte, SolicitudCombustible, DetalleSolicitud, DespachoCombustible, SuministroCombustible
+from .models import Transporte, SolicitudCombustible, DetalleSolicitud, DespachoCombustible, SuministroCombustible, \
+    RecepcionAlmacen
 from .forms import TransporteForm, SuministroCombustibleForm
 
 CANTIDAD_MAXIMA = Decimal('9999999999.99')
@@ -56,6 +57,7 @@ def dashboard(request):
     return render(request, 'combustible/dashboard.html', {
         'total_combustible': total_combustible,
     })
+
 
 @login_required
 def lista_transporte(request):
@@ -718,6 +720,7 @@ def eliminar_suministro(request, pk):
     messages.success(request, 'Suministro eliminado correctamente.')
     return redirect('lista_suministros')
 
+
 @login_required
 def ver_suministro(request, pk):
     if request.user.departamento not in ['admin', 'petroleo']:
@@ -726,6 +729,7 @@ def ver_suministro(request, pk):
 
     suministro = get_object_or_404(SuministroCombustible, pk=pk)
     return render(request, 'combustible/ver_suministro.html', {'suministro': suministro})
+
 
 @login_required
 def validar_suministro(request, pk):
@@ -738,3 +742,80 @@ def validar_suministro(request, pk):
     suministro.save()
     messages.success(request, f'Suministro "{suministro.nombre}" validado correctamente.')
     return redirect('lista_suministros')
+
+
+@login_required
+def lista_almacen(request):
+    if request.user.departamento not in ['admin', 'almacen']:
+        messages.error(request, 'No tiene permisos para ver el almacén.')
+        return redirect('dashboard')
+
+    recepciones = RecepcionAlmacen.objects.all()
+
+    nombre = request.GET.get('nombre', '')
+    fecha = request.GET.get('fecha', '')
+
+    if nombre:
+        recepciones = recepciones.filter(despacho__nombre__icontains=nombre)
+    if fecha:
+        recepciones = recepciones.filter(despacho__fecha_hora__date=fecha)
+
+    return render(request, 'combustible/lista_almacen.html', {'recepciones': recepciones})
+
+
+@login_required
+def ver_almacen(request, pk):
+    if request.user.departamento not in ['admin', 'almacen']:
+        messages.error(request, 'No tiene permisos para ver esta recepción.')
+        return redirect('dashboard')
+
+    recepcion = get_object_or_404(RecepcionAlmacen, pk=pk)
+    solicitud = recepcion.despacho.solicitud
+    detalles = DetalleSolicitud.objects.filter(solicitud=solicitud).select_related('transporte')
+
+    resumen_consumo = {}
+    resumen_venta = {}
+    subtotal_consumo = 0
+    subtotal_venta = 0
+
+    for detalle in detalles:
+        empresa = detalle.transporte.empresa
+        cantidad = detalle.cant_abastecer
+        if empresa.lower() in ['cte', 'ausa', 'ucm']:
+            resumen_consumo[empresa] = resumen_consumo.get(empresa, 0) + cantidad
+            subtotal_consumo += cantidad
+        else:
+            resumen_venta[empresa] = resumen_venta.get(empresa, 0) + cantidad
+            subtotal_venta += cantidad
+
+    resumen_consumo = dict(sorted(resumen_consumo.items()))
+    resumen_venta = dict(sorted(resumen_venta.items()))
+    total_general = subtotal_consumo + subtotal_venta
+
+    return render(request, 'combustible/ver_almacen.html', {
+        'recepcion': recepcion,
+        'solicitud': solicitud,
+        'detalles': detalles,
+        'resumen_consumo': resumen_consumo,
+        'resumen_venta': resumen_venta,
+        'subtotal_consumo': subtotal_consumo,
+        'subtotal_venta': subtotal_venta,
+        'total_general': total_general,
+    })
+
+
+@login_required
+def confirmar_recepcion(request, pk):
+    if request.user.departamento not in ['admin', 'almacen']:
+        messages.error(request, 'No tiene permisos para realizar esta acción.')
+        return redirect('dashboard')
+
+    recepcion = get_object_or_404(RecepcionAlmacen, pk=pk, estado='pendiente')
+    recepcion.estado = 'recibido'
+    recepcion.save()
+
+    recepcion.despacho.estado = 'suministrado'
+    recepcion.despacho.save()
+
+    messages.success(request, f'Recepción "{recepcion.despacho.nombre}" confirmada en almacén.')
+    return redirect('lista_almacen')
